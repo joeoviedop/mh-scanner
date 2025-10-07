@@ -1,4 +1,10 @@
-## Fase 0 — Setup & Foundation
+# Podcast Therapy Scanner
+
+**Internal tool for VoyBien team** - Scan YouTube channels/playlists for mental health content mentions.
+
+## 🚀 Current Status: Fase 0 Complete ✅
+
+**Progress: 15% Complete** - Foundation established, ready for authentication implementation.
 
 Este proyecto Next.js se generó siguiendo las convenciones definidas en `ARCHITECTURE.md` y `PROJECT_SETUP.md`.
 
@@ -26,7 +32,23 @@ npm run lint       # Revisar linting
 - Tailwind listo en `app/globals.css`
 - `.eslintrc.json` y `.gitignore` alineados con la guía del proyecto
 
+## ✅ **What's Completed (Fase 0)**
+- Next.js 15.5.4 with App Router
+- TypeScript with strict configuration
+- TailwindCSS 4.1.14 with custom VoyBien brand colors
+- ESLint 8.57.0 with TypeScript compatibility
+- SEO blocking (noindex/nofollow) for internal tool
+- Complete project documentation suite
+- Development environment ready
+
+## 🚀 **Next Phase: Authentication (Fase 1)**
+- Simple passcode-based authentication
+- Login page with form validation  
+- Route protection middleware
+- Session management
+
 ### Documentación clave
+- `WARP.md` — Project overview and progress tracking
 - `PROJECT_SETUP.md` — Reglas de trabajo y configuraciones
 - `ARCHITECTURE.md` — Estructura objetivo
 - `docs/MVP_ROADMAP.md` — Fases de implementación
