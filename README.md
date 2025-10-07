@@ -9,6 +9,7 @@
 Este proyecto Next.js se generó siguiendo las convenciones definidas en `ARCHITECTURE.md` y `PROJECT_SETUP.md`.
 
 ### Requisitos previos
+
 - Node.js ≥ 18.17.0 (instalado)
 - npm ≥ 9.0.0 (instalado)
 
@@ -22,17 +23,20 @@ npm run lint       # Revisar linting
 ```
 
 ### Primeros pasos
+
 1. Instala dependencias: `npm install`
 2. Levanta el servidor: `npm run dev`
 3. Visita `http://localhost:3000`
 
 ### Notas de configuración inicial
+
 - `next.config.ts` ya fuerza `noindex/nofollow` y habilita Server Actions
 - Paths de TypeScript (`@/components`, `@/lib`, `@/hooks`) configurados
 - Tailwind listo en `app/globals.css`
 - `.eslintrc.json` y `.gitignore` alineados con la guía del proyecto
 
 ## ✅ **What's Completed (Fase 0)**
+
 - Next.js 15.5.4 with App Router
 - TypeScript with strict configuration
 - TailwindCSS 4.1.14 with custom VoyBien brand colors
@@ -42,12 +46,14 @@ npm run lint       # Revisar linting
 - Development environment ready
 
 ## 🚀 **Next Phase: Authentication (Fase 1)**
+
 - Simple passcode-based authentication
-- Login page with form validation  
+- Login page with form validation
 - Route protection middleware
 - Session management
 
 ### Documentación clave
+
 - `WARP.md` — Project overview and progress tracking
 - `PROJECT_SETUP.md` — Reglas de trabajo y configuraciones
 - `ARCHITECTURE.md` — Estructura objetivo

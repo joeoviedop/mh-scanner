@@ -7,6 +7,7 @@ Podcast Therapy Scanner es una web app interna diseñada para el equipo de VoyBi
 ## Stack Tecnológico
 
 ### Frontend
+
 - **Framework**: Next.js 14+ (App Router)
 - **Styling**: TailwindCSS
 - **UI Components**: shadcn/ui (opcional)
@@ -14,12 +15,14 @@ Podcast Therapy Scanner es una web app interna diseñada para el equipo de VoyBi
 - **Type Safety**: TypeScript
 
 ### Backend
+
 - **API**: Next.js API Routes (App Router)
 - **Database & Real-time**: Convex (NoSQL serverless)
 - **Cron Jobs**: Vercel Cron Jobs
 - **Cache**: Opcional - Upstash Redis / Vercel KV
 
 ### Integraciones Externas
+
 - **YouTube Data API v3**: Listar episodios
 - **YouTube Captions API**: Obtener transcripciones
 - **LLM**: GPT-4 mini (OpenAI API)
@@ -27,6 +30,7 @@ Podcast Therapy Scanner es una web app interna diseñada para el equipo de VoyBi
 - **Apify**: Preparado pero no activo en MVP
 
 ### Hosting & Deploy
+
 - **Hosting**: Vercel
 - **Domain**: internal.voybien.com
 - **Environment**: Staging + Production
@@ -162,6 +166,7 @@ mh-scanner/
 ## Flujo de Datos
 
 ### 1. Input & Scanning
+
 ```
 Usuario → ScanInputForm → API Route (/api/youtube/fetch-episodes)
          ↓
@@ -171,6 +176,7 @@ Usuario → ScanInputForm → API Route (/api/youtube/fetch-episodes)
 ```
 
 ### 2. Transcription Fetching
+
 ```
 EpisodeList → API Route (/api/youtube/fetch-captions)
          ↓
@@ -180,6 +186,7 @@ EpisodeList → API Route (/api/youtube/fetch-captions)
 ```
 
 ### 3. Mention Detection
+
 ```
 Transcription → Keyword Filter → Context Extractor
          ↓
@@ -195,6 +202,7 @@ Transcription → Keyword Filter → Context Extractor
 ```
 
 ### 4. Review & Feedback
+
 ```
 FragmentCard → FeedbackButtons → Convex (feedback)
          ↓
@@ -202,6 +210,7 @@ FragmentCard → FeedbackButtons → Convex (feedback)
 ```
 
 ### 5. Export
+
 ```
 ExportButtons → API Route (/api/export/csv o /google-sheets)
          ↓
@@ -213,6 +222,7 @@ ExportButtons → API Route (/api/export/csv o /google-sheets)
 ## Modelos de Datos (Convex Schema)
 
 ### Channels
+
 ```typescript
 {
   _id: Id<"channels">,
@@ -225,6 +235,7 @@ ExportButtons → API Route (/api/export/csv o /google-sheets)
 ```
 
 ### Episodes
+
 ```typescript
 {
   _id: Id<"episodes">,
@@ -242,6 +253,7 @@ ExportButtons → API Route (/api/export/csv o /google-sheets)
 ```
 
 ### Transcriptions
+
 ```typescript
 {
   _id: Id<"transcriptions">,
@@ -258,6 +270,7 @@ ExportButtons → API Route (/api/export/csv o /google-sheets)
 ```
 
 ### Fragments (Menciones detectadas)
+
 ```typescript
 {
   _id: Id<"fragments">,
@@ -280,6 +293,7 @@ ExportButtons → API Route (/api/export/csv o /google-sheets)
 ```
 
 ### Feedback
+
 ```typescript
 {
   _id: Id<"feedback">,
@@ -294,27 +308,32 @@ ExportButtons → API Route (/api/export/csv o /google-sheets)
 ## Principios de Arquitectura
 
 ### 1. Modularidad
+
 - Cada integración externa (YouTube, LLM, Google Sheets) debe ser reemplazable
 - Los servicios están desacoplados mediante interfaces claras
 - El adaptador de Apify está listo pero inactivo en MVP
 
 ### 2. Bajo Costo
+
 - Solo procesar episodios con subtítulos disponibles
 - Usar filtro de keywords antes del LLM para reducir llamadas
 - Cache opcional para reducir llamadas redundantes a YouTube API
 
 ### 3. Privacidad & Seguridad
+
 - No indexable: robots.txt bloqueado, meta tags noindex/nofollow
 - Autenticación simple por passcode compartido
 - Variables de entorno seguras en Vercel
 - Sin cookies de terceros ni analytics externos
 
 ### 4. Type Safety
+
 - TypeScript en todo el proyecto
 - Validación de datos en fronteras (API routes, forms)
 - Tipos compartidos entre frontend y backend
 
 ### 5. Escalabilidad Preparada
+
 - Arquitectura lista para agregar Apify
 - Preparado para transcripción bajo demanda (Whisper API)
 - Sistema de feedback para mejorar detección sin fine-tuning
@@ -366,6 +385,7 @@ APIFY_API_TOKEN=
 ## Notas de Implementación
 
 ### Keywords Iniciales
+
 ```
 - "terapia"
 - "psicólogo", "psicóloga"
@@ -379,11 +399,13 @@ APIFY_API_TOKEN=
 ```
 
 ### Contexto de Detección
+
 - Ventana: ±45 segundos alrededor de keyword match
 - Máximo 90 segundos de contexto por fragmento
 - Incluir timestamps exactos para linking a YouTube
 
 ### LLM Prompt Structure
+
 ```
 Analiza este fragmento de un podcast y determina:
 1. ¿Es una mención genuina sobre terapia/salud mental? (Sí/No)

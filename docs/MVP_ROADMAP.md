@@ -7,6 +7,7 @@ Este documento define el plan de implementación del MVP en fases organizadas y 
 ## 🎯 Objetivo del MVP
 
 Construir una herramienta funcional interna para el equipo de VoyBien que permita:
+
 1. Escanear canales/playlists de YouTube
 2. Detectar menciones sobre terapia/salud mental
 3. Clasificar y rankear esas menciones
@@ -20,6 +21,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ## 📋 Features del MVP
 
 ### Must Have (Bloqueantes)
+
 - ✅ Formulario de input (URL + date range)
 - ✅ Listado de episodios encontrados
 - ✅ Detección de transcripciones disponibles
@@ -32,6 +34,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 - ✅ Autenticación con passcode
 
 ### Should Have (Importantes pero no bloqueantes)
+
 - ⏳ Vista de transcripción completa con highlights
 - ⏳ Exportación a Google Sheets
 - ⏳ Re-ranking basado en feedback
@@ -39,12 +42,14 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 - ⏳ Edición de timestamps
 
 ### Could Have (Nice to have)
+
 - ⏳ Batch processing de múltiples episodios
 - ⏳ Dashboard con stats
 - ⏳ Progress indicators durante procesamiento
 - ⏳ Cache de YouTube API calls
 
 ### Won't Have (Fuera del MVP)
+
 - ❌ Transcripción automática con Whisper
 - ❌ Descubrimiento automático de canales (Apify)
 - ❌ Sistema de comentarios/asignaciones
@@ -58,6 +63,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ### **Fase 0: Setup & Foundation** (3-5 días)
 
 #### 0.1 Inicialización del Proyecto
+
 - [ ] Crear proyecto Next.js 14 con TypeScript
 - [ ] Instalar dependencias core (React, Next, Tailwind)
 - [ ] Configurar TypeScript (`tsconfig.json`)
@@ -65,18 +71,21 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 - [ ] Setup Git + `.gitignore`
 
 #### 0.2 Setup de Convex
+
 - [ ] Crear cuenta en Convex
 - [ ] Instalar Convex SDK
 - [ ] Inicializar proyecto Convex (`npx convex dev`)
 - [ ] Crear `convex/schema.ts` con tablas básicas
 
 #### 0.3 Obtención de API Keys
+
 - [ ] YouTube Data API key (Google Cloud Console)
 - [ ] OpenAI API key
 - [ ] Google Service Account (para Sheets - fase posterior)
 - [ ] Configurar `.env.local` con todas las keys
 
 #### 0.4 Estructura de Carpetas
+
 - [ ] Crear estructura según `ARCHITECTURE.md`:
   - `/app` (routes)
   - `/components` (UI)
@@ -86,6 +95,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - `/docs` (documentation)
 
 #### 0.5 Base UI Setup
+
 - [ ] Configurar Tailwind con brand colors
 - [ ] Instalar shadcn/ui (opcional)
 - [ ] Crear layout base con Header/Footer
@@ -98,21 +108,25 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ### **Fase 1: Autenticación Simple** (1-2 días)
 
 #### 1.1 Página de Login
+
 - [ ] Crear `/app/(auth)/login/page.tsx`
 - [ ] Form con input de passcode
 - [ ] Validación client-side básica
 
 #### 1.2 Verificación de Passcode
+
 - [ ] API route: `/app/api/auth/verify-passcode/route.ts`
 - [ ] Comparar con `INTERNAL_PASSCODE` de env
 - [ ] Generar token simple (JWT o session cookie)
 
 #### 1.3 Protección de Rutas
+
 - [ ] Middleware para verificar autenticación
 - [ ] Redirect a `/login` si no autenticado
 - [ ] Guardar estado de auth en Context o cookie
 
 #### 1.4 SEO Blocking
+
 - [ ] Agregar meta tags `noindex, nofollow` en layout
 - [ ] Crear `robots.txt` que bloquea todo
 - [ ] Configurar headers en `next.config.js`
@@ -124,6 +138,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ### **Fase 2: Input & Scanning** (5-7 días)
 
 #### 2.1 UI - Formulario de Escaneo
+
 - [ ] Crear `/app/(dashboard)/page.tsx`
 - [ ] Componente `ScanInputForm.tsx`:
   - Input de URL (channel o playlist)
@@ -132,12 +147,14 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - Validación de URL de YouTube
 
 #### 2.2 YouTube URL Parser
+
 - [ ] Crear `/lib/utils/url-parser.ts`
 - [ ] Extraer channel ID o playlist ID
 - [ ] Detectar tipo (channel vs playlist)
 - [ ] Validar formato
 
 #### 2.3 YouTube Data API Integration
+
 - [ ] Crear `/lib/integrations/youtube/client.ts`
   - Inicializar cliente de YouTube API
   - Manejo de rate limits
@@ -149,6 +166,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - Paginación (máx 50 resultados)
 
 #### 2.4 Convex Backend - Channels & Episodes
+
 - [ ] Implementar Convex schema para `channels` y `episodes`
 - [ ] Crear mutations:
   - `createChannel(data)`
@@ -158,6 +176,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - `listEpisodesByChannel(channelId)`
 
 #### 2.5 API Route - Scan Channel
+
 - [ ] Crear `/app/api/youtube/scan-channel/route.ts`
 - [ ] Flow:
   1. Parse URL
@@ -167,6 +186,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   5. Return channel ID + episode count
 
 #### 2.6 UI - Listado de Episodios
+
 - [ ] Crear `/app/(dashboard)/episodes/page.tsx`
 - [ ] Componente `EpisodeList.tsx`
 - [ ] Componente `EpisodeCard.tsx`:
@@ -185,6 +205,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ### **Fase 3: Transcription Fetching** (3-5 días)
 
 #### 3.1 YouTube Captions API Integration
+
 - [ ] Crear `/lib/integrations/youtube/captions.ts`
 - [ ] `fetchCaptions(videoId)`:
   - Obtener lista de captions disponibles
@@ -194,6 +215,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - Convertir a formato unificado con timestamps
 
 #### 3.2 Convex Backend - Transcriptions
+
 - [ ] Implementar schema para `transcriptions`
 - [ ] Crear mutation:
   - `createTranscription(episodeId, data)`
@@ -201,6 +223,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - `getTranscriptionByEpisode(episodeId)`
 
 #### 3.3 API Route - Fetch Captions
+
 - [ ] Crear `/app/api/youtube/fetch-captions/route.ts`
 - [ ] Flow:
   1. Recibir episodeId
@@ -210,12 +233,14 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   5. Return transcription ID
 
 #### 3.4 UI - Procesamiento de Episodios
+
 - [ ] Agregar botón "Procesar" en `EpisodeCard`
 - [ ] Agregar "Procesar Todos" en `EpisodeList`
 - [ ] Loading indicator durante fetch
 - [ ] Actualizar estado en tiempo real (Convex reactivity)
 
 #### 3.5 Error Handling
+
 - [ ] Manejar videos sin transcripción
 - [ ] Manejar transcripciones en otros idiomas
 - [ ] Mostrar mensajes de error claros al usuario
@@ -227,6 +252,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ### **Fase 4: Mention Detection & Classification** (7-10 días)
 
 #### 4.1 Keyword Filter
+
 - [ ] Crear `/lib/constants/keywords.ts`
   - Lista de keywords de terapia/salud mental
   - Variaciones y sinónimos
@@ -236,6 +262,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - Return: posiciones de matches
 
 #### 4.2 Context Extractor
+
 - [ ] Crear `/lib/processing/context-extractor.ts`
 - [ ] `extractContext(transcription, matchPosition, windowSize = 45)`
   - Extraer ±45 segundos alrededor del match
@@ -243,6 +270,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - Return: context object con text + timestamps
 
 #### 4.3 OpenAI Integration
+
 - [ ] Crear `/lib/integrations/llm/client.ts`
   - Inicializar OpenAI client
   - Configurar GPT-4 mini
@@ -257,6 +285,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
     - Calcular confidence
 
 #### 4.4 Mention Detector
+
 - [ ] Crear `/lib/processing/mention-detector.ts`
 - [ ] `detectMentions(transcription)`:
   1. Run keyword filter
@@ -266,6 +295,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
      - Return fragment object
 
 #### 4.5 Convex Backend - Fragments
+
 - [ ] Implementar schema para `fragments`
 - [ ] Crear mutations:
   - `createFragment(data)`
@@ -275,6 +305,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - `getFragmentById(id)`
 
 #### 4.6 Convex Action - Process Episode
+
 - [ ] Crear `/convex/actions.ts`
 - [ ] Action `processEpisode(episodeId)`:
   1. Get transcription
@@ -285,11 +316,13 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   4. Update episode status to "processed"
 
 #### 4.7 API Route - Process Episode
+
 - [ ] Crear `/app/api/process/detect-mentions/route.ts`
 - [ ] Trigger Convex action
 - [ ] Stream progress updates (opcional)
 
 #### 4.8 Timestamp Helper
+
 - [ ] Crear `/lib/utils/timestamp-helpers.ts`
 - [ ] `formatTimestamp(seconds)` → "1:23:45"
 - [ ] `generateYouTubeUrl(videoId, timestamp)` → URL con &t=
@@ -301,12 +334,14 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ### **Fase 5: Review Interface** (5-7 días)
 
 #### 5.1 UI - Episode Detail Page
+
 - [ ] Crear `/app/(dashboard)/episodes/[id]/page.tsx`
 - [ ] Layout con dos columnas:
   - Columna izquierda: Lista de fragmentos
   - Columna derecha: Player de YouTube embebido
 
 #### 5.2 Fragment Card Component
+
 - [ ] Crear `/components/fragments/FragmentCard.tsx`
 - [ ] Mostrar:
   - Trigger phrase (highlighted)
@@ -321,6 +356,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - Ver en YouTube (new tab)
 
 #### 5.3 Fragment List Component
+
 - [ ] Crear `/components/fragments/FragmentList.tsx`
 - [ ] Listar todos los fragmentos del episodio
 - [ ] Ordenar por:
@@ -333,12 +369,14 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - Solo revisados / no revisados
 
 #### 5.4 Transcript View (opcional - Should Have)
+
 - [ ] Crear `/components/fragments/TranscriptView.tsx`
 - [ ] Mostrar transcripción completa
 - [ ] Highlight fragmentos detectados
 - [ ] Click en highlight → scroll a fragment card
 
 #### 5.5 YouTube Player Integration
+
 - [ ] Embed YouTube player con react-player o iframe
 - [ ] Sincronizar con timestamp al hacer click
 - [ ] Auto-play en timestamp
@@ -350,6 +388,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ### **Fase 6: Feedback & Re-ranking** (3-5 días)
 
 #### 6.1 Convex Backend - Feedback
+
 - [ ] Implementar schema para `feedback`
 - [ ] Crear mutations:
   - `submitFeedback(fragmentId, isUseful)`
@@ -358,6 +397,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - `getFeedbackStats()`
 
 #### 6.2 Re-ranker Logic
+
 - [ ] Crear `/lib/processing/reranker.ts`
 - [ ] `calculateRankScore(fragment, feedbackHistory)`:
   - Factor en confidence
@@ -366,12 +406,14 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - Return: updated rank score
 
 #### 6.3 Feedback Buttons Component
+
 - [ ] Crear `/components/fragments/FeedbackButtons.tsx`
 - [ ] Toggle entre Útil / No útil
 - [ ] Visual feedback (color change)
 - [ ] Guardar en Convex
 
 #### 6.4 Re-ranking Trigger
+
 - [ ] Después de cada feedback:
   - Trigger re-ranking de fragmentos similares
   - Actualizar rank scores en Convex
@@ -384,6 +426,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ### **Fase 7: Export Functionality** (3-4 días)
 
 #### 7.1 CSV Export
+
 - [ ] Crear `/lib/utils/csv-generator.ts`
 - [ ] `generateCSV(fragments)`:
   - Convertir array de fragmentos a CSV format
@@ -400,12 +443,14 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
     - Useful (Yes/No)
 
 #### 7.2 API Route - Export CSV
+
 - [ ] Crear `/app/api/export/csv/route.ts`
 - [ ] Accept: array de fragmentIds o episodeId
 - [ ] Generate CSV
 - [ ] Return: file download
 
 #### 7.3 Export Buttons Component
+
 - [ ] Crear `/components/export/ExportButtons.tsx`
 - [ ] Botones:
   - "Exportar a CSV" (este episodio)
@@ -413,6 +458,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 - [ ] Trigger download
 
 #### 7.4 Google Sheets Export (opcional - Should Have)
+
 - [ ] Crear `/lib/integrations/google-sheets/client.ts`
   - Setup Google Service Account
   - Authenticate
@@ -429,34 +475,40 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ### **Fase 8: Polish & Testing** (3-5 días)
 
 #### 8.1 Error Handling & Validation
+
 - [ ] Validar inputs en todos los API routes
 - [ ] Mostrar mensajes de error user-friendly
 - [ ] Error boundaries en componentes críticos
 - [ ] Logging de errores para debugging
 
 #### 8.2 Loading States
+
 - [ ] Skeleton loaders en listas
 - [ ] Spinners durante API calls
 - [ ] Progress indicators para batch processing
 - [ ] Disable buttons durante loading
 
 #### 8.3 Empty States
+
 - [ ] No channels scanned yet
 - [ ] No episodes found
 - [ ] No transcription available
 - [ ] No mentions detected
 
 #### 8.4 Responsive Design
+
 - [ ] Mobile-friendly (básico)
 - [ ] Tablet-friendly
 - [ ] Desktop optimizado
 
 #### 8.5 Performance Optimization
+
 - [ ] Lazy loading de componentes pesados
 - [ ] Memoization de queries repetitivas
 - [ ] Implementar cache básico (opcional)
 
 #### 8.6 Manual Testing
+
 - [ ] Test completo del happy path:
   1. Login
   2. Scan channel
@@ -472,6 +524,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - Network errors
 
 #### 8.7 Documentation
+
 - [ ] Actualizar README con:
   - Setup instructions
   - Usage guide
@@ -486,6 +539,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ### **Fase 9: Deployment** (2-3 días)
 
 #### 9.1 Vercel Setup
+
 - [ ] Crear proyecto en Vercel
 - [ ] Conectar repo de GitHub
 - [ ] Configurar environment variables:
@@ -494,23 +548,27 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
   - Convex URL
 
 #### 9.2 Convex Deployment
+
 - [ ] Deploy Convex production:
   - `npx convex deploy`
 - [ ] Configurar Convex production URL
 - [ ] Verificar schema en production
 
 #### 9.3 Domain Configuration
+
 - [ ] Configurar subdominio `internal.voybien.com`
 - [ ] Configurar SSL (automático con Vercel)
 - [ ] Verificar headers de seguridad
 
 #### 9.4 Production Testing
+
 - [ ] Test completo en production
 - [ ] Verificar que APIs funcionan
 - [ ] Verificar rate limits
 - [ ] Monitorear logs
 
 #### 9.5 Launch Checklist
+
 - [ ] ✅ Auth funcional
 - [ ] ✅ Scanning funcional
 - [ ] ✅ Processing funcional
@@ -529,6 +587,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ### Checklist Global del MVP
 
 **Fase 0: Setup & Foundation**
+
 - [ ] 0.1 Inicialización del Proyecto
 - [ ] 0.2 Setup de Convex
 - [ ] 0.3 Obtención de API Keys
@@ -536,12 +595,14 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 - [ ] 0.5 Base UI Setup
 
 **Fase 1: Autenticación Simple**
+
 - [ ] 1.1 Página de Login
 - [ ] 1.2 Verificación de Passcode
 - [ ] 1.3 Protección de Rutas
 - [ ] 1.4 SEO Blocking
 
 **Fase 2: Input & Scanning**
+
 - [ ] 2.1 UI - Formulario de Escaneo
 - [ ] 2.2 YouTube URL Parser
 - [ ] 2.3 YouTube Data API Integration
@@ -550,6 +611,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 - [ ] 2.6 UI - Listado de Episodios
 
 **Fase 3: Transcription Fetching**
+
 - [ ] 3.1 YouTube Captions API Integration
 - [ ] 3.2 Convex Backend - Transcriptions
 - [ ] 3.3 API Route - Fetch Captions
@@ -557,6 +619,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 - [ ] 3.5 Error Handling
 
 **Fase 4: Mention Detection & Classification**
+
 - [ ] 4.1 Keyword Filter
 - [ ] 4.2 Context Extractor
 - [ ] 4.3 OpenAI Integration
@@ -567,6 +630,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 - [ ] 4.8 Timestamp Helper
 
 **Fase 5: Review Interface**
+
 - [ ] 5.1 UI - Episode Detail Page
 - [ ] 5.2 Fragment Card Component
 - [ ] 5.3 Fragment List Component
@@ -574,18 +638,21 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 - [ ] 5.5 YouTube Player Integration
 
 **Fase 6: Feedback & Re-ranking**
+
 - [ ] 6.1 Convex Backend - Feedback
 - [ ] 6.2 Re-ranker Logic
 - [ ] 6.3 Feedback Buttons Component
 - [ ] 6.4 Re-ranking Trigger
 
 **Fase 7: Export Functionality**
+
 - [ ] 7.1 CSV Export
 - [ ] 7.2 API Route - Export CSV
 - [ ] 7.3 Export Buttons Component
 - [ ] 7.4 Google Sheets Export (opcional)
 
 **Fase 8: Polish & Testing**
+
 - [ ] 8.1 Error Handling & Validation
 - [ ] 8.2 Loading States
 - [ ] 8.3 Empty States
@@ -595,6 +662,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 - [ ] 8.7 Documentation
 
 **Fase 9: Deployment**
+
 - [ ] 9.1 Vercel Setup
 - [ ] 9.2 Convex Deployment
 - [ ] 9.3 Domain Configuration
@@ -606,43 +674,53 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ## 🚨 Risks & Mitigation
 
 ### Risk 1: YouTube API Rate Limits
+
 **Impacto**: Alto  
 **Probabilidad**: Media  
 **Mitigación**:
+
 - Implementar cache de llamadas
 - Limitar número de episodios por scan (max 50)
 - Considerar múltiples API keys en rotación
 
 ### Risk 2: OpenAI Costs
+
 **Impacto**: Medio  
 **Probabilidad**: Media  
 **Mitigación**:
+
 - Usar GPT-4 mini (más barato)
 - Filtrar con keywords antes del LLM
 - Limitar contexto a ±45s (no texto completo)
 - Monitorear costos diariamente
 
 ### Risk 3: Videos sin Transcripción
+
 **Impacto**: Medio  
 **Probabilidad**: Alta  
 **Mitigación**:
+
 - Mostrar claramente cuáles tienen transcripción
 - Preparar Whisper API para fase 2
 - Educar al usuario sobre limitación
 
 ### Risk 4: Clasificación Incorrecta del LLM
+
 **Impacto**: Medio  
 **Probabilidad**: Media  
 **Mitigación**:
+
 - Iterar en el prompt
 - Mostrar confidence score
 - Sistema de feedback para mejorar
 - Revisión manual siempre requerida
 
 ### Risk 5: Performance con Muchos Episodios
+
 **Impacto**: Bajo  
 **Probabilidad**: Baja  
 **Mitigación**:
+
 - Paginación en listas
 - Lazy loading
 - Batch processing limitado (max 10 simultáneos)
@@ -652,6 +730,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ## 📈 Success Metrics
 
 ### MVP Success Criteria
+
 - [ ] Usuario puede escanear un canal en < 30 segundos
 - [ ] 80%+ de episodios con transcripción son procesados sin errores
 - [ ] LLM detecta al menos 5 menciones por episodio relevante
@@ -660,6 +739,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 - [ ] Uptime > 99%
 
 ### Post-MVP Metrics (para evaluar)
+
 - Número de canales escaneados por semana
 - Número de menciones detectadas
 - Tasa de feedback positivo (Útil vs No útil)
@@ -671,18 +751,21 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ## 🔄 Post-MVP Roadmap (Fase 2)
 
 ### Short-term (1-2 meses post-MVP)
+
 1. **Whisper Integration**: Transcripción automática
 2. **Google Sheets Export**: Integración completa
 3. **Batch Processing**: Procesar múltiples episodios simultáneamente
 4. **Dashboard**: Stats y métricas agregadas
 
 ### Medium-term (3-6 meses post-MVP)
+
 1. **Apify Integration**: Descubrimiento automático de canales
 2. **Advanced Filtering**: Filtros complejos por sensibilidad, tone, etc.
 3. **Collaboration**: Sistema de comentarios y asignaciones
 4. **Webhook Notifications**: Notificar cuando se detectan menciones nuevas
 
 ### Long-term (6+ meses post-MVP)
+
 1. **Clip Kit Generator**: Generación automática de briefs
 2. **Video Editing Integration**: Conexión con herramientas de edición
 3. **Analytics Dashboard**: Métricas avanzadas y visualizaciones
@@ -693,6 +776,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 ## 📝 Notes & Assumptions
 
 ### Assumptions
+
 - Videos tienen subtítulos en español (YouTube Captions)
 - GPT-4 mini es suficiente para clasificación
 - Equipo de VoyBien tiene cuentas necesarias (Google Cloud, OpenAI, Convex)
@@ -700,6 +784,7 @@ Construir una herramienta funcional interna para el equipo de VoyBien que permit
 - Max 10 usuarios concurrentes (herramienta interna)
 
 ### Out of Scope para MVP
+
 - Mobile app nativa
 - Usuarios múltiples con roles
 - Sistema de permisos granular
