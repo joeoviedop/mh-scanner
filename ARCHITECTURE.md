@@ -7,7 +7,7 @@ Podcast Therapy Scanner es una web app interna diseñada para el equipo de VoyBi
 ## Stack Tecnológico
 
 ### Frontend
-- **Framework**: Next.js 14+ (App Router)
+- **Framework**: Next.js 15.5.4 (App Router)
 - **Styling**: TailwindCSS
 - **UI Components**: shadcn/ui (opcional)
 - **State Management**: React Context + Hooks
@@ -320,35 +320,6 @@ ExportButtons → API Route (/api/export/csv o /google-sheets)
 - Sistema de feedback para mejorar detección sin fine-tuning
 
 ---
-
-## Variables de Entorno
-
-```bash
-# YouTube
-YOUTUBE_API_KEY=
-
-# OpenAI
-OPENAI_API_KEY=
-
-# Google Sheets
-GOOGLE_SERVICE_ACCOUNT_EMAIL=
-GOOGLE_PRIVATE_KEY=
-GOOGLE_SHEET_ID=
-
-# Auth
-INTERNAL_PASSCODE=
-
-# Convex
-NEXT_PUBLIC_CONVEX_URL=
-CONVEX_DEPLOY_KEY=
-
-# Optional - Cache
-UPSTASH_REDIS_URL=
-UPSTASH_REDIS_TOKEN=
-
-# Optional - Apify (preparado pero no activo)
-APIFY_API_TOKEN=
-```
 
 ---
 

@@ -17,7 +17,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 ## Architecture Overview
 
 ### Tech Stack
-- **Frontend**: Next.js 14+ (App Router), React 18, TypeScript, TailwindCSS
+- **Frontend**: Next.js 15.5.4 (App Router), React 19, TypeScript, TailwindCSS
 - **Backend**: Convex (serverless NoSQL DB + real-time API), Next.js API Routes
 - **External APIs**: YouTube Data API v3, YouTube Captions API, OpenAI GPT-4 mini, Google Sheets API
 - **Hosting**: Vercel
@@ -37,32 +37,15 @@ User Review & Feedback → Re-ranking → CSV/Sheets Export
 - **Feedback Loop**: User feedback improves future rankings
 - **Export System**: CSV and Google Sheets integration
 
-## Planned Folder Structure
+## Project Structure
 
-```
-mh-scanner/
-├── app/                    # Next.js App Router
-│   ├── (auth)/            # Authentication routes  
-│   ├── (dashboard)/       # Main app routes
-│   └── api/               # API endpoints
-├── components/            # React components
-│   ├── ui/               # Base UI components (shadcn/ui)
-│   ├── forms/            # Form components
-│   ├── episodes/         # Episode-related components
-│   ├── fragments/        # Fragment/mention components
-│   └── export/           # Export functionality
-├── convex/               # Convex backend
-│   ├── schema.ts         # Database schema
-│   ├── channels.ts       # Channel queries/mutations
-│   ├── episodes.ts       # Episode queries/mutations
-│   └── fragments.ts      # Fragment queries/mutations
-├── lib/                  # Utilities and services
-│   ├── integrations/     # External API clients
-│   │   ├── youtube/      # YouTube API integration
-│   │   ├── llm/          # OpenAI integration
-│   └── processing/       # Core business logic
-└── docs/                 # Documentation
-```
+**See `ARCHITECTURE.md`** for detailed folder structure and organization.
+
+Key directories:
+- `app/` - Next.js App Router (auth & dashboard routes)
+- `components/` - React components organized by feature
+- `convex/` - Convex backend (schema, queries, mutations)
+- `lib/` - Utilities, integrations, and processing logic
 
 ## Development Commands
 
@@ -337,20 +320,7 @@ npx convex dev --until-success --clear
 
 ## Environment Variables
 
-```bash
-# Required for development
-YOUTUBE_API_KEY=your_youtube_api_key
-OPENAI_API_KEY=your_openai_api_key
-GOOGLE_SERVICE_ACCOUNT_EMAIL=service@project.iam.gserviceaccount.com
-GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-INTERNAL_PASSCODE=secure_internal_password
-NEXT_PUBLIC_CONVEX_URL=https://your-convex.convex.cloud
-CONVEX_DEPLOY_KEY=your_convex_deploy_key
-
-# Optional
-UPSTASH_REDIS_URL=redis_url_for_caching
-APIFY_API_TOKEN=token_for_future_phase
-```
+**See `.env.local.example`** for complete list of required environment variables.
 
 ---
 

@@ -29,12 +29,11 @@ Este documento describe las reglas de trabajo, configuraciones y convenciones pa
 ### Dependencias Principales
 ```json
 {
-  "next": "^14.1.0",
-  "react": "^18.2.0",
-  "react-dom": "^18.2.0",
-  "typescript": "^5.2.0",
-  "convex": "^1.8.0",
-  "tailwindcss": "^3.4.0"
+  "next": "15.5.4",
+  "react": "19.1.0",
+  "react-dom": "19.1.0",
+  "typescript": "^5",
+  "tailwindcss": "^4.1.14"
 }
 ```
 
@@ -202,38 +201,12 @@ export default config
 
 ## 🔐 Variables de Entorno
 
+**Ver `.env.local.example`** para la lista completa de variables requeridas.
+
 ### Setup Inicial
 1. Copiar `.env.local.example` a `.env.local`
 2. Llenar todas las variables requeridas
 3. **Nunca** commitear `.env.local`
-
-### Estructura de `.env.local.example`
-```bash
-# YouTube API
-YOUTUBE_API_KEY=your_youtube_api_key_here
-
-# OpenAI
-OPENAI_API_KEY=your_openai_api_key_here
-
-# Google Sheets (Service Account)
-GOOGLE_SERVICE_ACCOUNT_EMAIL=your_service_account@project.iam.gserviceaccount.com
-GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-GOOGLE_SHEET_ID=your_google_sheet_id
-
-# Auth
-INTERNAL_PASSCODE=your_secure_passcode_here
-
-# Convex
-NEXT_PUBLIC_CONVEX_URL=https://your-convex-deployment.convex.cloud
-CONVEX_DEPLOY_KEY=your_convex_deploy_key
-
-# Optional - Cache
-UPSTASH_REDIS_URL=
-UPSTASH_REDIS_TOKEN=
-
-# Optional - Apify (preparado, no activo en MVP)
-APIFY_API_TOKEN=
-```
 
 ---
 
@@ -375,44 +348,13 @@ __tests__/
 
 ## 🚀 Comandos de Desarrollo
 
-### Setup Inicial
-```bash
-# Install dependencies
-npm install
+**See `WARP.md`** for complete list of development commands.
 
-# Setup Convex
-npx convex dev
-
-# Run development server
-npm run dev
-```
-
-### Durante Desarrollo
-```bash
-# Dev server
-npm run dev
-
-# TypeScript check
-npm run type-check
-
-# Lint
-npm run lint
-
-# Format
-npm run format
-
-# Build
-npm run build
-```
-
-### Vercel Deploy
-```bash
-# Preview
-vercel
-
-# Production
-vercel --prod
-```
+Essential commands:
+- `npm run dev` - Development server
+- `npm run build` - Production build
+- `npm run lint` - Code linting
+- `npm run type-check` - TypeScript validation
 
 ---
 

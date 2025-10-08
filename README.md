@@ -26,11 +26,6 @@ npm run lint       # Revisar linting
 2. Levanta el servidor: `npm run dev`
 3. Visita `http://localhost:3000`
 
-### Notas de configuración inicial
-- `next.config.ts` ya fuerza `noindex/nofollow` y habilita Server Actions
-- Paths de TypeScript (`@/components`, `@/lib`, `@/hooks`) configurados
-- Tailwind listo en `app/globals.css`
-- `.eslintrc.json` y `.gitignore` alineados con la guía del proyecto
 
 ## ✅ **What's Completed (Fase 0) - VALIDATED**
 - Next.js 15.5.4 with App Router
@@ -45,12 +40,8 @@ npm run lint       # Revisar linting
 - Development environment ready and production build tested
 - **All validations passing**: lint, type-check, build, format
 
-## ✅ **Validation Results (All Passing)**
-- `npm ci`: Dependencies installed successfully
-- `npm run lint`: ESLint passing (TypeScript compatibility warning expected)
-- `npm run type-check`: All TypeScript types validated
-- `npm run build`: Production build successful (3.3s compile time)
-- `npm run format`: Prettier formatting applied to entire codebase
+## ✅ **Validation Results**
+All development tools passing: lint, type-check, build, format
 
 ## 🚀 **Next Phase: Authentication (Fase 1)**
 - Simple passcode-based authentication
@@ -60,7 +51,5 @@ npm run lint       # Revisar linting
 
 ### Documentación clave
 - `WARP.md` — Project overview and progress tracking
-- `PROJECT_SETUP.md` — Reglas de trabajo y configuraciones
-- `ARCHITECTURE.md` — Estructura objetivo
-- `docs/MVP_ROADMAP.md` — Fases de implementación
-- `docs/CONVEX_SCHEMA_PLAN.md` — Modelo de datos planificado
+- `ARCHITECTURE.md` — Technical architecture
+- `FASE_1_HANDOFF.md` — Next phase specifications
