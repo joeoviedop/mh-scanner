@@ -8,12 +8,19 @@
     "start": "next start",
     "lint": "eslint --ignore-path .gitignore .",
     "type-check": "tsc --noEmit",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "convex:dev": "npx convex dev",
+    "convex:deploy": "npx convex deploy"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "convex": "^1.27.5",
+    "date-fns": "^4.1.0",
     "next": "15.5.4",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-hook-form": "^7.64.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.14",
