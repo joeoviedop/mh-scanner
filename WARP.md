@@ -10,8 +10,8 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 - 📊 Export results to CSV/Google Sheets for analysis
 - 🎯 Enable content collaboration and market analysis
 
-**Status**: Fase 4 Complete ✅ → Ready for Fase 5: Review Interface (MVP v0.1)
-**Progress**: 70% completo - Transcripciones automáticas y clasificación asistida por IA listas
+**Status**: Fase 5 Complete ✅ → Ready for Fase 6: Feedback & Re-ranking (MVP v0.1)
+**Progress**: 80% completo - Interfaz de revisión y gestión de episodios implementada
 **Domain**: `internal.voybien.com` (internal tool, not indexable)
 
 ## Architecture Overview
@@ -136,11 +136,12 @@ npx convex dev --until-success --clear
 - Persistencia de fragmentos y actualización de episodios
 - UI en dashboard para disparar detección y revisar hallazgos
 
-### Fase 5: Review Interface (5-7 días)
-- Episode detail page with fragment listings
-- YouTube player integration with timestamp linking
-- Fragment cards with classification badges
-- Transcript view with highlights
+### ✅ Fase 5: Review Interface (5-7 días)
+- Página dedicada por episodio (`/dashboard/episodes/[episodeId]`)
+- Gestión completa de transcripciones y detección de menciones
+- Vista de transcripción con resaltado de keywords y modo segmentado
+- Interfaz profesional con metadatos de episodio y controles manuales
+- Análisis de fragmentos con clasificación IA y enlaces a YouTube
 
 ### Fase 6: Feedback & Re-ranking (3-5 days)
 - User feedback system (Useful/Not Useful)
@@ -329,18 +330,18 @@ npx convex dev --until-success --clear
 
 ## 📊 Current Progress Status
 
-### 📈 **Overall Progress: 70% Complete**
+### 📈 **Overall Progress: 80% Complete**
 
 ```
-Progress: ████████████████████████████░░░░░░░░░░░░ 70% Complete
+Progress: ████████████████████████████████░░░░░░░░ 80% Complete
 
 ✅ Phase 0: Setup & Foundation (COMPLETED)
 ✅ Phase 1: Authentication (COMPLETED) 
 ✅ Phase 2: Input & Scanning (COMPLETED)
 ✅ Phase 3: Transcription & Processing (COMPLETED)
-✅ Phase 4: Mention Detection & Classification (COMPLETED) ← JUST FINISHED
-🔄 Phase 5: Review Interface (NEXT)
-⏳ Phase 6: Feedback & Re-ranking
+✅ Phase 4: Mention Detection & Classification (COMPLETED)
+✅ Phase 5: Review Interface (COMPLETED) ← JUST FINISHED
+🔄 Phase 6: Feedback & Re-ranking (NEXT)
 ⏳ Phase 7: Export Functionality
 ⏳ Phase 8: Polish & Testing
 ⏳ Phase 9: Deployment
@@ -388,22 +389,39 @@ Progress: ███████████████████████�
 - [x] **Persistencia de Fragmentos**: Mutaciones (`convex/fragments.ts`) y enlaces con timestamps
 - [x] **Experiencia de Revisión Inicial**: Dashboard muestra fragmentos detectados con metadatos
 
-### 🔄 **Next Phase: Phase 5 - Review Interface**
+#### **Phase 5: Review Interface (COMPLETED) ✅**
+- [x] **Página Dedicada por Episodio**: URL `/dashboard/episodes/[episodeId]` con interfaz completa
+- [x] **Gestión de Transcripciones**: Controles para fetch manual y visualización de estados  
+- [x] **Vista de Transcripción Mejorada**: Modo texto completo y segmentos con timestamps
+- [x] **Resaltado de Keywords**: Highlighting automático de términos de terapia detectados
+- [x] **Interfaz de Fragmentos**: Análisis de IA con clasificación, confianza y sensibilidad
+- [x] **Navegación Profesional**: Breadcrumbs, enlaces a YouTube, metadatos completos
+
+### 🔄 **Next Phase: Phase 6 - Feedback & Re-ranking**
 
 #### **Immediate Next Steps:**
-1. **Vista de Episodio**
-   - Página detalle con reproductor incrustado y lista de fragmentos
-   - Sincronización de timestamps y resaltado de transcripción
+1. **Sistema de Feedback**
+   - Botones "Útil / No útil" en cada fragmento
+   - Persistencia de feedback en Convex para mejora del algoritmo
 
-2. **Herramientas de Revisión**
-   - Controles de feedback (Útil / No útil)
-   - Indicadores de sensibilidad y confianza
+2. **Re-ranking Algorithm**
+   - Score dinámico basado en feedback acumulado
+   - Ordenamiento inteligente de fragmentos más relevantes
 
-3. **Preparación para Re-ranking**
-   - Recolección de feedback para alimentar fase 6
-   - Persistencia de estados de revisión y métricas básicas
+3. **Métricas de Calidad**
+   - Dashboard de precisión y recall del sistema
+   - Análisis de patrones en feedback para mejorar prompts
 
 ## 🔄 Recent Major Updates
+
+### **Phase 5 Implementation - Review Interface (January 2025)**
+- **📄 Dedicated Episode Pages**: Nueva ruta `/dashboard/episodes/[episodeId]` para gestión individual
+- **🎛️ Professional Interface**: Metadatos completos, thumbnail, duración, canal, estados de procesamiento
+- **📝 Enhanced Transcript Viewer**: Modo texto completo y segmentos timestamped con navegación
+- **🎯 Keyword Highlighting**: Resaltado automático de términos de terapia en transcripciones
+- **🧠 Fragment Management**: Vista completa de análisis IA con tema, tono, confianza y sensibilidad
+- **🔗 YouTube Integration**: Enlaces directos con videoId correcto y navegación fluida
+- **🚀 Apify Integration Fixes**: Resolución completa de issues de API response format y env variables
 
 ### **Phase 3 & 4 Implementation (January 2025)**
 - **📝 Transcripciones**: Cliente YouTube Captions + acciones Convex con fallback a subtítulos públicos (watch page)
@@ -413,7 +431,26 @@ Progress: ███████████████████████�
 - **📺 Dashboard**: Controles para disparar transcripciones/detecciones y panel con fragmentos clasificados
 - **🎛️ Intake UI**: Formulario en `/dashboard` que registra fuentes vía `/api/youtube/scan` + `channelActions.scanSource`
 
-### **Technical Deliverables Added:**
+### **Recent Technical Deliverables:**
+
+#### **Phase 5 - Review Interface (NEW)**
+```
+app/(dashboard)/dashboard/episodes/[episodeId]/
+├── page.tsx - Página dedicada por episodio
+└── EpisodeDetailPageClient.tsx - Interfaz completa de gestión
+
+src/components/episodes/
+├── TranscriptViewer.tsx - Modal para vista de transcripciones (deprecated)
+└── EpisodeList.tsx - Actualizado con navegación a páginas dedicadas
+
+app/api/episodes/[episodeId]/
+└── transcript/route.ts - API para obtener transcripciones individuales
+
+lib/integrations/apify/
+└── transcript.ts - Fixes críticos: env vars, API response format, error handling
+```
+
+#### **Phase 3 & 4 (Previous)**
 ```
 convex/
 ├── transcriptions.ts - Mutaciones/queries para guardar transcripciones
@@ -434,7 +471,7 @@ app/(dashboard)/episodes/
 
 ---
 
-## 🚀 **READY FOR PHASE 5 - REVIEW INTERFACE**
+## 🚀 **READY FOR PHASE 6 - FEEDBACK & RE-RANKING**
 
 ### ✅ **Current State:**
 - **Autenticación**: Sistema de passcode en producción ✅
@@ -442,12 +479,13 @@ app/(dashboard)/episodes/
 - **Procesamiento**: Detección y clasificación de menciones con GPT-4 mini ✅
 - **Persistencia**: Convex con canales, episodios, transcripciones, fragmentos y jobs ✅
 - **Dashboard**: Gestión de episodios con disparadores y vista inicial de fragmentos ✅
+- **Review Interface**: Páginas dedicadas con gestión completa de episodios ✅
 
-### 🎯 **Phase 5 Objectives:**
-1. **Review UI**: Página detalle por episodio con reproductor y sincronización
-2. **Feedback Loop**: Botones Útil / No útil y registro en Convex
-3. **Transcript Viewer**: Resaltado de fragmentos dentro de la transcripción completa
-4. **Ready for Phase 6**: Recolectar datos para re-ranking automático
+### 🎯 **Phase 6 Objectives:**
+1. **Feedback System**: Botones "Útil / No útil" en fragmentos con persistencia
+2. **Re-ranking Algorithm**: Score dinámico basado en feedback acumulado
+3. **Quality Metrics**: Dashboard de precisión y análisis de patrones
+4. **Ready for Phase 7**: Sistema de feedback completo para preparar exportación
 
-**Status**: Preparado para construir la interfaz de revisión y la capa de feedback
-**Next Coding Session**: Implementar vista detalle de episodio y controles de revisión
+**Status**: Interfaz de revisión completada - listo para implementar sistema de feedback
+**Next Coding Session**: Implementar botones de feedback y algoritmo de re-ranking

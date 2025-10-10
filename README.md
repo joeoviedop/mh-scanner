@@ -2,9 +2,9 @@
 
 **Internal tool for VoyBien team** - Scan YouTube channels/playlists for mental health content mentions.
 
-## 🚀 Current Status: Fase 4 Complete ✅
+## 🚀 Current Status: Fase 5 Complete ✅
 
-**Progress: 70% Complete** - Transcripciones automáticas y clasificación asistida por IA listas para revisión interna.
+**Progress: 80% Complete** - Interfaz de revisión y gestión de episodios implementada. Sistema completo de transcripciones y análisis IA con páginas dedicadas.
 
 Este proyecto Next.js se generó siguiendo las convenciones definidas en `ARCHITECTURE.md` y `PROJECT_SETUP.md`.
 
@@ -80,22 +80,31 @@ npm run convex:deploy # Deploy Convex a producción
 - [x] Persistencia de transcripciones y coincidencias iniciales en Convex (`convex/transcriptions.ts`)
 - [x] UI del dashboard con controles para disparar transcripciones y estados
 
-### **Fase 4: Mention Detection & Classification (COMPLETED)** 🎉
+### **Fase 4: Mention Detection & Classification (COMPLETED)** ✅
 - [x] Filtro de palabras clave y extracción de contexto (`lib/processing/keyword-filter.ts`)
 - [x] Cliente OpenAI GPT-4 mini con respuesta estructurada (`lib/integrations/llm/openai.ts`)
 - [x] Acciones Convex para detección y clasificación de menciones (`convex/mentionActions.ts`, `convex/fragments.ts`)
 - [x] API y UI para revisar fragmentos detectados con enlaces a YouTube
 - [x] Actualización de estados de episodios y almacenamiento de fragmentos clasificados
 
+### **Fase 5: Review Interface (COMPLETED)** ✅
+- [x] **Páginas dedicadas por episodio** (`/dashboard/episodes/[episodeId]`)
+- [x] **Gestión completa de transcripciones** con controles manuales y visualización de estados
+- [x] **Vista mejorada de transcripciones** con modo texto completo y segmentos timestamped
+- [x] **Resaltado de keywords** automático en transcripciones para términos de terapia
+- [x] **Interfaz profesional** con metadatos, thumbnail, duración, canal y navegación
+- [x] **Análisis de fragmentos** con clasificación IA, confianza, sensibilidad y enlaces a YouTube
+- [x] **Integración con Apify** completamente funcional con fixes de env variables y API format
+
 ## ✅ **Validation Results**
 - `npm run lint`
 - `npm run type-check`
 
-## 🚀 **Next Phase: Review Interface (Fase 5)**
-- Vista de detalle por episodio con reproductor y fragmentos destacados
-- Resaltado de transcripciones y navegación por timestamp
-- Controles de validación interna (útil / no útil)
-- Preparación para feedback y re-ranking en fases siguientes
+## 🚀 **Next Phase: Feedback & Re-ranking (Fase 6)**
+- Sistema de feedback con botones "Útil / No útil" en cada fragmento
+- Algoritmo de re-ranking basado en feedback acumulado
+- Dashboard de métricas de calidad y precisión del sistema
+- Análisis de patrones para mejorar prompts de clasificación
 
 ### Documentación clave
 - `WARP.md` — Project overview and coding agent guidance

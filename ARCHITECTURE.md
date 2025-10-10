@@ -4,7 +4,7 @@
 
 Podcast Therapy Scanner es una web app interna diseñada para el equipo de VoyBien que permite escanear canales y playlists de YouTube para detectar menciones sobre terapia y salud mental en videopodcasts en español.
 
-**Estado actual:** Fases 0-4 completadas (70% del MVP) → continuación con interfaz de revisión (Fase 5).
+**Estado actual:** Fases 0-5 completadas (80% del MVP) → continuación con sistema de feedback (Fase 6).
 
 ## Stack Tecnológico
 
@@ -44,8 +44,10 @@ mh-scanner/
 │   ├── (dashboard)/              # Main app route group
 │   │   ├── dashboard/
 │   │   │   ├── page.tsx          # Dashboard principal + formulario de escaneo
-│   │   │   └── episodes/         # Listado de episodios y fragmentos
-│   │   │       └── page.tsx
+│   │   │   └── episodes/         # Gestión de episodios
+│   │   │       ├── page.tsx      # Listado de episodios
+│   │   │       └── [episodeId]/  # Página dedicada por episodio
+│   │   │           └── page.tsx  # Interfaz completa de revisión
 │   │   ├── episodes/             # Redirección a /dashboard/episodes
 │   │   └── layout.tsx            # Layout del dashboard
 │   ├── api/                      # API Routes
@@ -70,9 +72,10 @@ mh-scanner/
 │   │   ├── ScanInputForm.tsx     # Formulario principal de escaneo
 │   │   └── DateRangeSelector.tsx
 │   ├── episodes/                 # Episode-related components
-│   │   ├── EpisodeList.tsx
+│   │   ├── EpisodeList.tsx       # Lista de episodios con navegación
 │   │   ├── EpisodeCard.tsx
-│   │   └── EpisodeFilters.tsx
+│   │   ├── EpisodeFilters.tsx
+│   │   └── TranscriptViewer.tsx  # Modal de transcripción (deprecated)
 │   ├── fragments/                # Fragment/mention components
 │   │   ├── FragmentCard.tsx      # Tarjeta individual de mención
 │   │   ├── FragmentList.tsx

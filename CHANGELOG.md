@@ -5,12 +5,53 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- Integración con Apify (`lib/integrations/apify/transcript.ts`) como fuente principal de transcripciones
+- Sistema de feedback para fragmentos (preparación Fase 6)
+- Algoritmo de re-ranking basado en feedback de usuarios
 
 ### Changed
-- `lib/integrations/youtube/captions.ts` ahora depende únicamente de Apify (se eliminaron los intentos con watch page/timedtext)
-- `convex/transcriptionActions.fetchCaptionsForEpisode` registra errores específicos de Apify y marca el episodio en estado `error`
-- `channelActions.scanSource` mantiene la omisión de Shorts (< 2 minutos) y reportes en el resumen
+- Mejoras en estabilidad y rendimiento del sistema de transcripciones
+
+## [0.6.0] - 2025-01-10 - **Fase 5 Complete** ✅
+
+### 🎆 **MILESTONE: Review Interface Implemented**
+**Progress: 80% Complete** - Dedicated episode management pages with complete transcript workflow
+
+### Added
+- **Dedicated Episode Pages**
+  - New route `/dashboard/episodes/[episodeId]` for individual episode management
+  - Complete episode metadata display (thumbnail, title, channel, duration, publish date)
+  - Professional navigation with breadcrumbs back to episodes list
+- **Enhanced Transcript Management**
+  - Full-text and timestamped segment viewing modes
+  - Automatic therapy keyword highlighting in transcriptions
+  - Manual transcript fetching and mention detection controls
+  - Real-time processing status and error handling
+- **Fragment Analysis Interface**
+  - Comprehensive AI analysis display (theme, tone, confidence, sensitivity)
+  - Direct YouTube links with proper video ID handling
+  - Fragment cards with detailed classification metadata
+- **Apify Integration Fixes**
+  - Resolved environment variable mismatch (`APIFY_TOKEN` vs `APIFY_API_TOKEN`)
+  - Fixed API response format handling (wrapped data object)
+  - Added comprehensive error logging and debugging
+  - Enhanced null/undefined checks for robustness
+
+### Changed
+- **Navigation Flow**: Episodes list now links to dedicated pages instead of modal popups
+- **Episode List Component**: Updated to use page navigation links instead of transcript viewer modal
+- **API Response Handling**: All Apify endpoints now properly handle both wrapped and unwrapped response formats
+- **Error Handling**: Improved error messages throughout transcript and mention detection workflows
+
+### Technical Implementation
+- **New Pages**: `app/(dashboard)/dashboard/episodes/[episodeId]/page.tsx` and `EpisodeDetailPageClient.tsx`
+- **API Endpoints**: New transcript endpoint `app/api/episodes/[episodeId]/transcript/route.ts`
+- **Enhanced Components**: Updated `EpisodeList.tsx` with navigation improvements
+- **Bug Fixes**: Critical fixes in `lib/integrations/apify/transcript.ts` for API compatibility
+
+### Validation
+- `npm run lint` passing
+- `npm run type-check` passing
+- Production build successful
 
 ## [0.5.1] - 2025-01-10 - **Dashboard Scanning UI**
 
