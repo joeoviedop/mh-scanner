@@ -26,7 +26,7 @@ export class OpenAIClient {
   private readonly endpoint: string;
   private readonly model: string;
 
-  constructor(apiKey?: string, model = "gpt-4o-mini", endpoint = "https://api.openai.com/v1/responses") {
+  constructor(apiKey?: string, model = "gpt-4o-mini", endpoint = "https://api.openai.com/v1/chat/completions") {
     if (!apiKey) {
       throw new Error("Missing OPENAI_API_KEY environment variable");
     }
@@ -37,6 +37,14 @@ export class OpenAIClient {
   }
 
   async classifyFragment(input: ClassificationInput): Promise<FragmentClassification> {
+    console.log("🤖 OpenAI Request:", {
+      endpoint: this.endpoint,
+      model: this.model,
+      hasApiKey: !!this.apiKey,
+      fragmentText: input.fragmentText.substring(0, 100) + "...",
+      keywords: input.keywords
+    });
+
     const response = await fetch(this.endpoint, {
       method: "POST",
       headers: {
@@ -45,7 +53,7 @@ export class OpenAIClient {
       },
       body: JSON.stringify({
         model: this.model,
-        input: [
+        messages: [
           {
             role: "system",
             content:
@@ -53,12 +61,7 @@ export class OpenAIClient {
           },
           {
             role: "user",
-            content: [
-              {
-                type: "text",
-                text: this.buildPrompt(input),
-              },
-            ],
+            content: this.buildPrompt(input),
           },
         ],
         response_format: {
@@ -109,19 +112,30 @@ export class OpenAIClient {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error("❌ OpenAI Error:", {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
       throw new Error(`OpenAI request failed: ${response.status} ${errorText}`);
     }
 
     const data = (await response.json()) as {
-      output?: {
-        content: { type: string; text?: string }[];
+      choices: {
+        message: {
+          content: string;
+        };
       }[];
     };
 
-    const content = data.output
-      ?.flatMap((item) => item.content)
-      ?.find((item) => typeof item.text === "string")?.text;
+    console.log("✅ OpenAI Response:", {
+      hasChoices: !!data.choices?.length,
+      contentLength: data.choices?.[0]?.message?.content?.length || 0
+    });
+
+    const content = data.choices?.[0]?.message?.content;
     if (!content) {
+      console.error("❌ Empty OpenAI response:", data);
       throw new Error("Empty response from OpenAI");
     }
 

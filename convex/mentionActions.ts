@@ -117,18 +117,24 @@ export const detectMentionsForEpisode = action({
 
     try {
       // Get active keywords from configuration
+      console.log("🔍 Fetching active keywords...");
       const activeKeywords = await ctx.runQuery(api.keywordConfig.getActiveKeywords);
+      console.log(`📝 Found ${activeKeywords.length} active keywords:`, activeKeywords.slice(0, 5));
       
       if (activeKeywords.length === 0) {
+        console.error("❌ No active keywords configured for detection");
         throw new Error("No active keywords configured for detection");
       }
 
+      console.log(`🎯 Detecting keyword matches in ${transcription.segments.length} segments...`);
       const matches = detectKeywordMatches(transcription.segments, activeKeywords, {
         windowSeconds: 45,
         maxMatches: 30,
       });
+      console.log(`✅ Found ${matches.length} keyword matches`);
 
       if (matches.length === 0) {
+        console.log("🔍 No keyword matches found - completing job without LLM analysis");
         await ctx.runMutation(api.fragments.deleteByEpisode, { episodeId });
         await ctx.runMutation(api.episodes.updateMentionResults, {
           episodeId,
@@ -158,6 +164,7 @@ export const detectMentionsForEpisode = action({
         } satisfies DetectionResult;
       }
 
+      console.log("🤖 Starting LLM classification phase...");
       await ctx.runMutation(api.scanJobs.updateStatus, {
         jobId,
         status: "running",
@@ -173,6 +180,8 @@ export const detectMentionsForEpisode = action({
 
       for (let index = 0; index < matches.length; index += 1) {
         const match = matches[index];
+        console.log(`🤖 Classifying fragment ${index + 1}/${matches.length}:`, match.matchedText.substring(0, 50) + "...");
+        
         const classification = await client.classifyFragment({
           fragmentText: match.matchedText,
           contextText: match.contextText,
