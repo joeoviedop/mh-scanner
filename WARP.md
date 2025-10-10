@@ -406,7 +406,7 @@ Progress: ███████████████████████�
 ## 🔄 Recent Major Updates
 
 ### **Phase 3 & 4 Implementation (January 2025)**
-- **📝 Transcripciones**: Cliente YouTube Captions + acciones Convex para descargas y reintentos
+- **📝 Transcripciones**: Cliente YouTube Captions + acciones Convex para descargas y reintentos (with OAuth refresh)
 - **🧠 Clasificación IA**: Integración GPT-4 mini con respuesta JSON y control de confianza
 - **🗂️ Persistencia**: Nuevos módulos Convex (`transcriptions.ts`, `fragments.ts`, `mentionActions.ts`, `scanJobs.ts`)
 - **🧩 Procesamiento**: Filtro de keywords multi-idioma y extracción de contexto

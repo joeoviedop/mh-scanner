@@ -153,18 +153,21 @@ function parseTtml(ttml: string): CaptionSegment[] {
   return segments;
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url);
+async function fetchJson<T>(url: string, headers?: Record<string, string>): Promise<T> {
+  const response = await fetch(url, {
+    headers,
+  });
   if (!response.ok) {
     throw new YouTubeCaptionsError(`YouTube API error (${response.status})`, response.status);
   }
   return response.json() as Promise<T>;
 }
 
-async function fetchText(url: string): Promise<string> {
+async function fetchText(url: string, headers?: Record<string, string>): Promise<string> {
   const response = await fetch(url, {
     headers: {
       Accept: "application/xml",
+      ...headers,
     },
   });
 
@@ -284,21 +287,23 @@ async function fetchTimedText(params: {
   return { text: null, attempts };
 }
 
-export async function fetchCaptions(videoId: string, apiKey: string): Promise<CaptionResult | null> {
+export async function fetchCaptions(videoId: string, accessToken: string): Promise<CaptionResult | null> {
   if (!videoId) {
     throw new YouTubeCaptionsError("Missing videoId");
   }
 
-  if (!apiKey) {
-    throw new YouTubeCaptionsError("Missing YOUTUBE_API_KEY environment variable");
+  if (!accessToken) {
+    throw new YouTubeCaptionsError("Missing YouTube access token");
   }
 
   const listUrl = new URL(CAPTION_ENDPOINT);
   listUrl.searchParams.set("part", "snippet");
   listUrl.searchParams.set("videoId", videoId);
-  listUrl.searchParams.set("key", apiKey);
+  const authHeaders = {
+    Authorization: `Bearer ${accessToken}`,
+  };
 
-  const data = await fetchJson<{ items?: CaptionItem[] }>(listUrl.toString());
+  const data = await fetchJson<{ items?: CaptionItem[] }>(listUrl.toString(), authHeaders);
   const items = data.items ?? [];
 
   const chosen = pickCaptionTrack(items);
@@ -324,11 +329,10 @@ export async function fetchCaptions(videoId: string, apiKey: string): Promise<Ca
 
   if (!raw) {
     const downloadUrl = new URL(`${CAPTION_ENDPOINT}/${captionId}`);
-    downloadUrl.searchParams.set("key", apiKey);
     downloadUrl.searchParams.set("tfmt", "ttml");
 
     try {
-      raw = await fetchText(downloadUrl.toString());
+      raw = await fetchText(downloadUrl.toString(), authHeaders);
     } catch (error) {
       if (error instanceof YouTubeCaptionsError && error.status === 401) {
         const summary = timedText.attempts.map((attempt) => `${attempt.status}:${attempt.query}`).join(" | ");

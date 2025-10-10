@@ -3,8 +3,9 @@ import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { fetchCaptions } from "../lib/integrations/youtube/captions";
+import { fetchCaptions, YouTubeCaptionsError } from "../lib/integrations/youtube/captions";
 import { matchTherapyKeywords } from "../lib/constants/therapy-keywords";
+import { clearCachedAccessToken, getYouTubeAccessToken } from "../lib/integrations/youtube/oauth";
 
 type FetchCaptionSummary = {
   language: string | null;
@@ -25,11 +26,6 @@ export const fetchCaptionsForEpisode = action({
     force: v.optional(v.boolean()),
   },
   handler: async (ctx, { episodeId, force = false }): Promise<FetchCaptionResult> => {
-    const youtubeApiKey = process.env.YOUTUBE_API_KEY;
-    if (!youtubeApiKey) {
-      throw new Error("Missing YOUTUBE_API_KEY environment variable");
-    }
-
     const episode = (await ctx.runQuery(api.episodes.getById, { id: episodeId })) as
       | (Doc<"episodes"> & { _id: Id<"episodes"> })
       | null;
@@ -81,7 +77,20 @@ export const fetchCaptionsForEpisode = action({
     });
 
     try {
-      const result = await fetchCaptions(episode.videoId, youtubeApiKey);
+      let accessToken = await getYouTubeAccessToken();
+      let result: Awaited<ReturnType<typeof fetchCaptions>>;
+
+      try {
+        result = await fetchCaptions(episode.videoId, accessToken);
+      } catch (error) {
+        if (error instanceof YouTubeCaptionsError && error.status === 401) {
+          clearCachedAccessToken();
+          accessToken = await getYouTubeAccessToken();
+          result = await fetchCaptions(episode.videoId, accessToken);
+        } else {
+          throw error;
+        }
+      }
 
       if (!result || result.segments.length === 0) {
         const message = "No captions available for this video";

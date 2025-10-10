@@ -36,6 +36,15 @@ npm run convex:deploy # Deploy Convex a producción
 3. Envía el formulario para registrar la fuente y disparar el escaneo inicial.
 4. Dirígete a **Episodios** para solicitar transcripciones y ejecutar la detección de menciones sobre el contenido importado.
 
+### Configuración de credenciales de YouTube
+1. **API Key** (`YOUTUBE_API_KEY`): necesaria para listar canales/episodios vía Data API v3.
+2. **OAuth** (descarga de subtítulos protegidos):
+   - `GOOGLE_CLIENT_ID`
+   - `GOOGLE_CLIENT_SECRET`
+   - `GOOGLE_REFRESH_TOKEN`
+3. En Convex: `npx convex env set <NOMBRE> <valor>` para cada variable.
+4. En Next.js: agrega los mismos valores a `.env.local` si deseas usarlos desde rutas API del frontend.
+
 
 ## ✅ **What's Completed**
 

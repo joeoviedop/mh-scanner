@@ -229,6 +229,16 @@ export default config
 4. En **Inicio**, agrega la URL del canal/playlist/video y define la frecuencia de escaneo.
 5. Visita **Episodios** para revisar el contenido importado, solicitar transcripciones y lanzar la detección de menciones.
 
+### Credenciales OAuth para subtítulos
+1. Habilita **YouTube Data API v3** en Google Cloud.
+2. Crea un **OAuth Client (Desktop app)** y anota `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`.
+3. Usa [OAuth 2.0 Playground](https://developers.google.com/oauthplayground):
+   - Configura “Use your own OAuth credentials” con los valores anteriores.
+   - Autoriza el scope `https://www.googleapis.com/auth/youtube.force-ssl`.
+   - Intercambia el código y copia el `refresh_token` (será tu `GOOGLE_REFRESH_TOKEN`).
+4. Carga los valores en Convex: `npx convex env set GOOGLE_CLIENT_ID ...`, `GOOGLE_CLIENT_SECRET ...`, `GOOGLE_REFRESH_TOKEN ...`.
+5. (Opcional) Duplica los valores en `.env.local` si necesitas usarlos también desde el lado Next.js.
+
 ---
 
 ## 📝 Convenciones de Código

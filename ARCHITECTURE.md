@@ -103,7 +103,8 @@ mh-scanner/
 ├── lib/                          # Shared utilities & services
 │   ├── integrations/             # External API clients
 │   │   ├── youtube/
-│   │   │   └── captions.ts       # Descarga/parsing de subtítulos YouTube
+│   │   │   ├── captions.ts       # Descarga/parsing de subtítulos YouTube (OAuth)
+│   │   │   └── oauth.ts          # Renovación de tokens OAuth YouTube
 │   │   ├── llm/
 │   │   │   └── openai.ts         # Cliente GPT-4 mini + prompt
 │   │   ├── google-sheets/

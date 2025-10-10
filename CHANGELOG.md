@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Renovación automática de tokens OAuth para descargar subtítulos protegidos
+- Configuración de variables `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`
+
+### Changed
+- El flujo de transcripción usa OAuth en lugar de API Key para `fetchCaptions`
+
 ## [0.5.1] - 2025-01-10 - **Dashboard Scanning UI**
 
 ### Added
