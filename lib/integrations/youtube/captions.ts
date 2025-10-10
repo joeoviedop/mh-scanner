@@ -336,21 +336,16 @@ export async function fetchCaptions(videoId: string, accessToken: string): Promi
   const data = await fetchJson<{ items?: CaptionItem[] }>(listUrl.toString(), authHeaders);
   const items = data.items ?? [];
 
+  const trackSummary = items
+    .map((item) => {
+      const lang = item.snippet?.language ?? "?";
+      const kind = item.snippet?.trackKind ?? "";
+      const name = item.snippet?.name?.simpleText ?? "";
+      return `${item.id} [${lang}] ${kind} ${name}`.trim();
+    })
+    .join(" | ");
+
   const chosen = pickCaptionTrack(items);
-  if (process.env.NODE_ENV !== "production") {
-    console.log("[captions] available tracks", JSON.stringify(items.map((item) => ({
-      id: item.id,
-      language: item.snippet?.language,
-      trackKind: item.snippet?.trackKind,
-      name: item.snippet?.name?.simpleText,
-    })), null, 2));
-    console.log("[captions] chosen track", {
-      id: chosen?.id,
-      language: chosen?.snippet?.language,
-      trackKind: chosen?.snippet?.trackKind,
-      name: chosen?.snippet?.name?.simpleText,
-    });
-  }
   if (!chosen) {
     return null;
   }
@@ -372,9 +367,6 @@ export async function fetchCaptions(videoId: string, accessToken: string): Promi
   raw = timedText.text;
 
   if (!raw) {
-    if (process.env.NODE_ENV !== "production") {
-      console.log("[captions] timedtext attempts", timedText.attempts);
-    }
     const downloadUrl = new URL(`${CAPTION_ENDPOINT}/${captionId}`);
     downloadUrl.searchParams.set("tfmt", "ttml");
 
@@ -384,7 +376,7 @@ export async function fetchCaptions(videoId: string, accessToken: string): Promi
       if (error instanceof YouTubeCaptionsError && (error.status === 401 || error.status === 403)) {
         const summary = timedText.attempts.map((attempt) => `${attempt.status}:${attempt.query}`).join(" | ");
         throw new YouTubeCaptionsError(
-          `${error.message} (timedtext attempts: ${summary || "none"})`,
+          `${error.message} (tracks: ${trackSummary || "none"}; timedtext attempts: ${summary || "none"})`,
           error.status,
         );
       }
