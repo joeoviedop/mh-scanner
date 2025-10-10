@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -31,7 +32,17 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
               Podcast Therapy Scanner
             </h1>
           </div>
-          <LogoutButton />
+          <div className="flex items-center gap-6 text-sm font-medium text-slate-700">
+            <nav className="flex items-center gap-4">
+              <Link href="/dashboard" className="hover:text-slate-900">
+                Inicio
+              </Link>
+              <Link href="/dashboard/episodes" className="hover:text-slate-900">
+                Episodios
+              </Link>
+            </nav>
+            <LogoutButton />
+          </div>
         </div>
       </header>
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
