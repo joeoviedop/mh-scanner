@@ -44,8 +44,10 @@ export type ParsedYouTubeUrlType = z.infer<typeof ParsedYouTubeUrl>;
  */
 export function parseYouTubeUrl(url: string): ParsedYouTubeUrlType | null {
   try {
-    // Validate URL format
-    const validatedUrl = YouTubeUrlSchema.parse({ url });
+    const trimmed = url.trim();
+    const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+    const validatedUrl = YouTubeUrlSchema.parse({ url: withProtocol });
     const cleanUrl = validatedUrl.url.trim();
     
     // Check if it's a YouTube URL
@@ -109,7 +111,6 @@ export function parseYouTubeUrl(url: string): ParsedYouTubeUrlType | null {
     // If no patterns match, return null
     return null;
   } catch (error) {
-    console.error("Error parsing YouTube URL:", error);
     return null;
   }
 }
