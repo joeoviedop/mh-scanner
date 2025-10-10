@@ -5,11 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- Renovación automática de tokens OAuth para descargar subtítulos protegidos
-- Configuración de variables `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`
+- Fallback público mediante `lib/integrations/youtube/watchPage.ts` para obtener subtítulos desde `ytInitialPlayerResponse`
+- Conversión automática de pistas `srv3` a segmentos (misma estructura TTML)
 
 ### Changed
-- El flujo de transcripción usa OAuth en lugar de API Key para `fetchCaptions`
+- El flujo de transcripción ya no requiere OAuth; `lib/integrations/youtube/captions.ts` prioriza subtítulos públicos (watch page + timedtext)
+- `convex/transcriptionActions.fetchCaptionsForEpisode` depende exclusivamente del nuevo mecanismo público
 
 ## [0.5.1] - 2025-01-10 - **Dashboard Scanning UI**
 

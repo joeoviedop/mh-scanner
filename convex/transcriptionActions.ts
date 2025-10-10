@@ -3,9 +3,8 @@ import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { fetchCaptions, YouTubeCaptionsError } from "../lib/integrations/youtube/captions";
+import { fetchCaptions } from "../lib/integrations/youtube/captions";
 import { matchTherapyKeywords } from "../lib/constants/therapy-keywords";
-import { clearCachedAccessToken, getYouTubeAccessToken } from "../lib/integrations/youtube/oauth";
 
 type FetchCaptionSummary = {
   language: string | null;
@@ -77,20 +76,7 @@ export const fetchCaptionsForEpisode = action({
     });
 
     try {
-      let accessToken = await getYouTubeAccessToken();
-      let result: Awaited<ReturnType<typeof fetchCaptions>>;
-
-      try {
-        result = await fetchCaptions(episode.videoId, accessToken);
-      } catch (error) {
-        if (error instanceof YouTubeCaptionsError && error.status === 401) {
-          clearCachedAccessToken();
-          accessToken = await getYouTubeAccessToken();
-          result = await fetchCaptions(episode.videoId, accessToken);
-        } else {
-          throw error;
-        }
-      }
+      const result = await fetchCaptions(episode.videoId);
 
       if (!result || result.segments.length === 0) {
         const message = "No captions available for this video";
