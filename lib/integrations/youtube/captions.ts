@@ -158,7 +158,26 @@ async function fetchJson<T>(url: string, headers?: Record<string, string>): Prom
     headers,
   });
   if (!response.ok) {
-    throw new YouTubeCaptionsError(`YouTube API error (${response.status})`, response.status);
+    let detail = "";
+    try {
+      const body = await response.text();
+      if (body) {
+        try {
+          const parsed = JSON.parse(body);
+          detail = parsed?.error?.message || body;
+        } catch {
+          detail = body;
+        }
+      }
+    } catch {
+      detail = "";
+    }
+
+    const message = detail
+      ? `YouTube API error (${response.status}): ${detail}`
+      : `YouTube API error (${response.status})`;
+
+    throw new YouTubeCaptionsError(message, response.status);
   }
   return response.json() as Promise<T>;
 }
@@ -172,7 +191,18 @@ async function fetchText(url: string, headers?: Record<string, string>): Promise
   });
 
   if (!response.ok) {
-    throw new YouTubeCaptionsError(`Failed to download captions (${response.status})`, response.status);
+    let detail = "";
+    try {
+      detail = await response.text();
+    } catch {
+      detail = "";
+    }
+
+    const message = detail
+      ? `Failed to download captions (${response.status}): ${detail}`
+      : `Failed to download captions (${response.status})`;
+
+    throw new YouTubeCaptionsError(message, response.status);
   }
 
   return response.text();
