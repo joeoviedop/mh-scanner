@@ -250,6 +250,11 @@ export function EpisodeList({
                         ⚠️ {episode.transcriptionError}
                       </div>
                     )}
+                    {episode.status === "skipped" && episode.transcriptionError && (
+                      <div className="text-gray-500">
+                        ⚠️ {episode.transcriptionError}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -289,7 +294,7 @@ export function EpisodeList({
                       👁️ View Mentions
                     </button>
                   )}
-                  {onFetchTranscription && !episode.hasTranscription && (
+                  {onFetchTranscription && !episode.hasTranscription && episode.status !== "skipped" && (
                     <>
                       <span className="text-xs text-gray-400">•</span>
                       <button

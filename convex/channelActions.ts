@@ -26,10 +26,12 @@ type ScanSummary = {
   episodesProcessed: number;
   newEpisodes: number;
   updatedEpisodes: number;
+  skippedEpisodes: number;
 };
 
 const MAX_PAGES = 3;
 const PAGE_SIZE = 50;
+const MIN_DURATION_SECONDS = 120;
 
 async function upsertChannel(
   ctx: ActionCtx,
@@ -101,7 +103,12 @@ async function saveEpisode(
   ctx: ActionCtx,
   channelId: Id<"channels">,
   video: YouTubeVideo,
-): Promise<"created" | "updated"> {
+): Promise<"created" | "updated" | "skipped"> {
+  const durationSeconds = parseDuration(video.contentDetails.duration);
+  if (durationSeconds > 0 && durationSeconds < MIN_DURATION_SECONDS) {
+    return "skipped";
+  }
+
   const existing = await ctx.runQuery(api.episodes.getByVideoId, { videoId: video.id });
 
   await ctx.runMutation(api.episodes.createOrUpdate, {
@@ -112,7 +119,7 @@ async function saveEpisode(
     channelTitle: video.snippet.channelTitle,
     publishedAt: new Date(video.snippet.publishedAt).getTime(),
     duration: video.contentDetails.duration,
-    durationSeconds: parseDuration(video.contentDetails.duration),
+    durationSeconds,
     thumbnailUrl:
       video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url,
     viewCount: video.statistics.viewCount,
@@ -142,9 +149,11 @@ async function processChannel(
   const persistedChannel = await upsertChannel(ctx, channelData, source, scanFrequency, createdBy);
 
   let nextPageToken: string | undefined;
+  let considered = 0;
   let processed = 0;
   let created = 0;
   let updated = 0;
+  let skipped = 0;
 
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const { videos, nextPageToken: token } = await client.getChannelVideos(
@@ -154,16 +163,21 @@ async function processChannel(
     );
 
     for (const video of videos) {
+      considered += 1;
       const result = await saveEpisode(ctx, persistedChannel._id, video);
-      processed += 1;
-      if (result === "created") created += 1;
-      else updated += 1;
+      if (result === "skipped") {
+        skipped += 1;
+      } else {
+        processed += 1;
+        if (result === "created") created += 1;
+        else updated += 1;
+      }
 
       await ctx.runMutation(api.scanJobs.updateStatus, {
         jobId,
         status: "running",
-        itemsProcessed: processed,
-        progress: Math.min(99, Math.round((processed / PAGE_SIZE / MAX_PAGES) * 100)),
+        itemsProcessed: considered,
+        progress: Math.min(99, Math.round((considered / PAGE_SIZE / MAX_PAGES) * 100)),
       });
     }
 
@@ -185,6 +199,7 @@ async function processChannel(
     episodesProcessed: processed,
     newEpisodes: created,
     updatedEpisodes: updated,
+    skippedEpisodes: skipped,
   };
 }
 
@@ -204,9 +219,11 @@ async function processPlaylist(
   const persistedPlaylist = await upsertPlaylist(ctx, playlistData, source, scanFrequency, createdBy);
 
   let nextPageToken: string | undefined;
+  let considered = 0;
   let processed = 0;
   let created = 0;
   let updated = 0;
+  let skipped = 0;
 
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const { videos, nextPageToken: token } = await client.getPlaylistVideos(
@@ -216,16 +233,21 @@ async function processPlaylist(
     );
 
     for (const video of videos) {
+      considered += 1;
       const result = await saveEpisode(ctx, persistedPlaylist._id, video);
-      processed += 1;
-      if (result === "created") created += 1;
-      else updated += 1;
+      if (result === "skipped") {
+        skipped += 1;
+      } else {
+        processed += 1;
+        if (result === "created") created += 1;
+        else updated += 1;
+      }
 
       await ctx.runMutation(api.scanJobs.updateStatus, {
         jobId,
         status: "running",
-        itemsProcessed: processed,
-        progress: Math.min(99, Math.round((processed / PAGE_SIZE / MAX_PAGES) * 100)),
+        itemsProcessed: considered,
+        progress: Math.min(99, Math.round((considered / PAGE_SIZE / MAX_PAGES) * 100)),
       });
     }
 
@@ -247,6 +269,7 @@ async function processPlaylist(
     episodesProcessed: processed,
     newEpisodes: created,
     updatedEpisodes: updated,
+    skippedEpisodes: skipped,
   };
 }
 
@@ -276,6 +299,8 @@ async function processVideo(
   }, scanFrequency, createdBy);
 
   const result = await saveEpisode(ctx, persistedChannel._id, video);
+  const processed = result === "skipped" ? 0 : 1;
+  const skipped = result === "skipped" ? 1 : 0;
 
   await ctx.runMutation(api.scanJobs.updateStatus, {
     jobId,
@@ -292,9 +317,10 @@ async function processVideo(
   return {
     channelId: persistedChannel._id,
     channelType: "video",
-    episodesProcessed: 1,
+    episodesProcessed: processed,
     newEpisodes: result === "created" ? 1 : 0,
     updatedEpisodes: result === "updated" ? 1 : 0,
+    skippedEpisodes: skipped,
   };
 }
 

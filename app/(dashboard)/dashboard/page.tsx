@@ -44,9 +44,13 @@ export default function DashboardPage() {
 
       const summary = data.summary;
       const processed = summary?.episodesProcessed ?? 0;
+      const skipped = summary?.skippedEpisodes ?? 0;
+      const messageSuffix = skipped > 0
+        ? ` Episodios omitidos por ser cortos: ${skipped}.`
+        : "";
       setStatus({
         variant: "success",
-        message: `Escaneo iniciado correctamente. Episodios procesados: ${processed}. Revisa el progreso en la sección de episodios.`,
+        message: `Escaneo iniciado correctamente. Episodios procesados: ${processed}.${messageSuffix} Revisa el progreso en la sección de episodios.`,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "No fue posible iniciar el escaneo";

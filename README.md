@@ -34,7 +34,8 @@ npm run convex:deploy # Deploy Convex a producción
 1. Inicia sesión con el passcode interno.
 2. En el dashboard (Inicio), pega la URL del canal/playlist/video y selecciona la frecuencia de escaneo.
 3. Envía el formulario para registrar la fuente y disparar el escaneo inicial.
-4. Dirígete a **Episodios** para solicitar transcripciones y ejecutar la detección de menciones sobre el contenido importado.
+4. El escaneo omite automáticamente Shorts (videos < 2 minutos) para enfocarse en episodios largos.
+5. Dirígete a **Episodios** para solicitar transcripciones y ejecutar la detección de menciones sobre el contenido importado.
 
 ### Configuración de credenciales de YouTube
 1. **Obligatoria:** `YOUTUBE_API_KEY` para listar canales y episodios con la Data API v3.
@@ -72,6 +73,7 @@ npm run convex:deploy # Deploy Convex a producción
 
 - [x] API route para solicitar transcripciones (`/api/youtube/fetch-captions`)
 - [x] Cliente YouTube Captions con priorización en español y fallback público (`lib/integrations/youtube/captions.ts`, `lib/integrations/youtube/watchPage.ts`)
+- [x] Omisión de Shorts en el escaneo y mensajes claros cuando no hay subtítulos públicos
 - [x] Acciones Convex para orquestar trabajos de transcripción (`convex/transcriptionActions.ts`, `convex/scanJobs.ts`)
 - [x] Persistencia de transcripciones y coincidencias iniciales en Convex (`convex/transcriptions.ts`)
 - [x] UI del dashboard con controles para disparar transcripciones y estados

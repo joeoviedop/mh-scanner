@@ -227,7 +227,8 @@ export default config
 2. En otra terminal, corre `npm run dev`.
 3. Inicia sesión en `http://localhost:3000` con el passcode.
 4. En **Inicio**, agrega la URL del canal/playlist/video y define la frecuencia de escaneo.
-5. Visita **Episodios** para revisar el contenido importado, solicitar transcripciones y lanzar la detección de menciones.
+5. El backend omite Shorts (< 2 minutos) para centrarse en episodios largos.
+6. Visita **Episodios** para revisar el contenido importado, solicitar transcripciones y lanzar la detección de menciones.
 
 ### (Opcional) Credenciales OAuth
 El pipeline de transcripciones usa subtítulos públicos disponibles en la página del video (`ytInitialPlayerResponse`). No es necesario configurar OAuth para operar la webapp.
