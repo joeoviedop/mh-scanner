@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import ProcessingStatus from "../../../../../src/components/episodes/ProcessingStatus";
+import MentionResults from "../../../../../src/components/episodes/MentionResults";
+import type { Id } from "../../../../../convex/_generated/dataModel";
 
 interface TranscriptSegment {
   start: number;
@@ -68,8 +71,6 @@ export default function EpisodeDetailPageClient({ episodeId }: EpisodeDetailPage
   const [fragments, setFragments] = useState<Fragment[]>([]);
   const [loading, setLoading] = useState(true);
   const [transcriptLoading, setTranscriptLoading] = useState(false);
-  const [fragmentsLoading, setFragmentsLoading] = useState(false);
-  const [detectingMentions, setDetectingMentions] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"full" | "segments">("full");
@@ -133,8 +134,6 @@ export default function EpisodeDetailPageClient({ episodeId }: EpisodeDetailPage
 
   const fetchFragments = async () => {
     try {
-      setFragmentsLoading(true);
-
       const response = await fetch(`/api/episodes/${episodeId}/fragments`);
       const data = await response.json();
 
@@ -148,8 +147,6 @@ export default function EpisodeDetailPageClient({ episodeId }: EpisodeDetailPage
     } catch (err) {
       // Fragments might not exist yet, that's okay
       setFragments([]);
-    } finally {
-      setFragmentsLoading(false);
     }
   };
 
@@ -193,46 +190,7 @@ export default function EpisodeDetailPageClient({ episodeId }: EpisodeDetailPage
     }
   };
 
-  const handleDetectMentions = async () => {
-    if (!episode) return;
 
-    try {
-      setDetectingMentions(true);
-      setError(null);
-      setStatusMessage(null);
-
-      const response = await fetch("/api/process/detect-mentions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ episodeId: episode._id }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? "Failed to detect mentions");
-      }
-
-      if (data.result?.status === "completed") {
-        setStatusMessage("Mention detection completed successfully.");
-        await fetchEpisodeData(); // Refresh all data
-        await fetchFragments(); // Refresh fragments
-      } else if (data.result?.status === "queued") {
-        setStatusMessage("Mention detection is already in progress.");
-      } else if (data.result?.status === "skipped") {
-        setStatusMessage("Cannot detect mentions at this time.");
-      } else {
-        setStatusMessage("Mention detection started.");
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to detect mentions";
-      setError(message);
-    } finally {
-      setDetectingMentions(false);
-    }
-  };
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -442,15 +400,13 @@ export default function EpisodeDetailPageClient({ episodeId }: EpisodeDetailPage
                 )}
                 
                 {episode.hasTranscription && (
-                  <button
-                    onClick={handleDetectMentions}
-                    disabled={detectingMentions || episode.status === "processing"}
-                    className="block w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  >
-                    {detectingMentions || episode.status === "processing"
-                      ? "🔍 Detecting..."
-                      : "🧠 Detect Mentions"}
-                  </button>
+                  <ProcessingStatus 
+                    episodeId={episodeId as Id<"episodes">}
+                    onCompletion={async () => {
+                      await fetchEpisodeData();
+                      await fetchFragments();
+                    }}
+                  />
                 )}
               </div>
             </div>
@@ -566,81 +522,31 @@ export default function EpisodeDetailPageClient({ episodeId }: EpisodeDetailPage
         )}
 
         {/* Fragments/Mentions Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="border-b border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900">Detected Mentions</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              {fragmentsLoading
-                ? "Loading mentions..."
-                : fragments.length === 0
-                ? "No mentions detected yet. Click 'Detect Mentions' to analyze the transcript."
-                : `${fragments.length} mention${fragments.length === 1 ? "" : "s"} detected with AI analysis.`}
-            </p>
-          </div>
-
-          <div className="p-6">
-            {fragmentsLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-500">Loading mentions...</p>
-              </div>
-            ) : fragments.length > 0 ? (
-              <div className="space-y-4">
-                {fragments.map((fragment) => (
-                  <article key={fragment._id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <header className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase text-gray-500 mb-3">
-                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">{fragment.classification.tema}</span>
-                      <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">{fragment.classification.tono}</span>
-                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded">{fragment.classification.confianza}% confidence</span>
-                      {fragment.classification.sensibilidad
-                        .filter((label) => label !== "ninguna")
-                        .map((label) => (
-                          <span key={label} className="bg-rose-100 text-rose-700 px-2 py-1 rounded">
-                            {label}
-                          </span>
-                        ))}
-                    </header>
-                    
-                    <p className="text-gray-900 mb-2 font-medium">{fragment.text}</p>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Context: <span className="font-medium">{fragment.context}</span>
-                    </p>
-                    
-                    {fragment.classification.razon && (
-                      <p className="text-sm text-gray-600 mb-3">
-                        Analysis: <span className="italic">{fragment.classification.razon}</span>
-                      </p>
-                    )}
-                    
-                    <footer className="flex items-center justify-between text-xs text-gray-500">
-                      <div>
-                        Time: {formatTime(fragment.startTime)} - {formatTime(fragment.endTime)}
-                      </div>
-                      <a
-                        href={fragment.youtubeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        View on YouTube →
-                      </a>
-                    </footer>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 text-gray-500">
-                <div className="text-4xl mb-4">🔍</div>
-                <p className="mb-4">No mentions detected yet.</p>
-                {episode.hasTranscription ? (
-                  <p className="text-sm">Click &quot;Detect Mentions&quot; to analyze the transcript with AI.</p>
-                ) : (
-                  <p className="text-sm">Fetch a transcript first, then run mention detection.</p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        <MentionResults
+          fragments={fragments.map(fragment => ({
+            _id: fragment._id,
+            startTime: fragment.startTime,
+            endTime: fragment.endTime,
+            matchedText: fragment.text,
+            contextText: fragment.context,
+            matchedKeywords: [],
+            videoId: episode.videoId,
+            classification: {
+              tema: fragment.classification.tema,
+              tono: fragment.classification.tono as "positiva" | "neutral" | "negativa",
+              sensibilidad: fragment.classification.sensibilidad,
+              confianza: fragment.classification.confianza,
+              razon: fragment.classification.razon,
+            },
+            confidenceScore: fragment.classification.confianza,
+            detectedAt: fragment.detectedAt,
+          }))}
+          episodeTitle={episode.title}
+          channelName={episode.channelTitle}
+          onRefresh={async () => {
+            await fetchFragments();
+          }}
+        />
       </div>
     </div>
   );

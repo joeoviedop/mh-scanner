@@ -27,6 +27,25 @@ export const getActiveForTarget = query({
   },
 });
 
+// Get all jobs for a target (for progress tracking)
+export const getByTarget = query({
+  args: {
+    targetType: v.union(
+      v.literal("channel"),
+      v.literal("episode"),
+      v.literal("transcription")
+    ),
+    targetId: v.string(),
+  },
+  handler: async (ctx, { targetType, targetId }) => {
+    return ctx.db
+      .query("scanJobs")
+      .withIndex("by_target", (q) => q.eq("targetType", targetType).eq("targetId", targetId))
+      .order("desc")
+      .take(10); // Get last 10 jobs for this target
+  },
+});
+
 export const create = mutation({
   args: {
     type: v.union(
