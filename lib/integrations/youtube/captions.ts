@@ -16,7 +16,7 @@ export type CaptionResult = {
   segments: CaptionSegment[];
   fullText: string;
   wordCount: number;
-  source: "watch:ttml" | "watch:srv3" | "timedtext";
+  source: "watch:ttml" | "watch:srv3" | "watch:vtt" | "timedtext";
 };
 
 export class YouTubeCaptionsError extends Error {
@@ -180,11 +180,73 @@ function parseSrv3(raw: string): CaptionSegment[] {
   return segments;
 }
 
-async function attemptUrl(url: URL, type: "ttml" | "srv3"): Promise<CaptionSegment[]> {
+function parseVtt(vtt: string): CaptionSegment[] {
+  const lines = vtt
+    .replace(/^WEBVTT[^\n]*\n+/i, "")
+    .split(/\r?\n/)
+    .map((line) => line.trimEnd());
+
+  const segments: CaptionSegment[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    if (!lines[i]) {
+      i += 1;
+      continue;
+    }
+
+    if (/^\d+$/.test(lines[i])) {
+      i += 1;
+      continue;
+    }
+
+    const timingMatch = lines[i].match(
+      /^(\d{2}:\d{2}:\d{2}\.\d{3}|\d{2}:\d{2}\.\d{3})\s+-->\s+(\d{2}:\d{2}:\d{2}\.\d{3}|\d{2}:\d{2}\.\d{3})/,
+    );
+
+    if (!timingMatch) {
+      i += 1;
+      continue;
+    }
+
+    const start = parseTimestamp(timingMatch[1].replace(",", "."));
+    const end = parseTimestamp(timingMatch[2].replace(",", "."));
+
+    i += 1;
+    let text = "";
+
+    while (i < lines.length && lines[i]) {
+      text += `${lines[i]} `;
+      i += 1;
+    }
+
+    const cleaned = text.replace(/\s+/g, " ").trim();
+    if (cleaned) {
+      segments.push({
+        start,
+        end,
+        text: decodeEntities(cleaned),
+      });
+    }
+
+    while (i < lines.length && !lines[i]) {
+      i += 1;
+    }
+  }
+
+  return segments;
+}
+
+async function attemptUrl(url: URL, type: "ttml" | "srv3" | "vtt"): Promise<CaptionSegment[]> {
   try {
     const response = await fetch(url.toString(), {
       headers: {
-        Accept: type === "srv3" ? "application/json" : "application/xml",
+        Accept:
+          type === "srv3"
+            ? "application/json"
+            : type === "vtt"
+            ? "text/vtt, application/x-subrip"
+            : "application/xml",
       },
     });
 
@@ -193,14 +255,20 @@ async function attemptUrl(url: URL, type: "ttml" | "srv3"): Promise<CaptionSegme
     }
 
     const body = await response.text();
-    return type === "srv3" ? parseSrv3(body) : parseTtml(body);
+    if (type === "srv3") {
+      return parseSrv3(body);
+    }
+    if (type === "vtt") {
+      return parseVtt(body);
+    }
+    return parseTtml(body);
   } catch {
     return [];
   }
 }
 
-async function downloadFromBase(track: WatchCaptionTrack): Promise<{ segments: CaptionSegment[]; source: "watch:ttml" | "watch:srv3" | null }> {
-  const attempts: Array<{ url: URL; type: "ttml" | "srv3" }> = [];
+async function downloadFromBase(track: WatchCaptionTrack): Promise<{ segments: CaptionSegment[]; source: CaptionResult["source"] | null }> {
+  const attempts: Array<{ url: URL; type: "ttml" | "srv3" | "vtt" }> = [];
 
   try {
     attempts.push({ url: new URL(track.baseUrl), type: "ttml" });
@@ -211,6 +279,14 @@ async function downloadFromBase(track: WatchCaptionTrack): Promise<{ segments: C
   const baseClone = new URL(track.baseUrl);
   baseClone.searchParams.set("fmt", "ttml");
   attempts.push({ url: baseClone, type: "ttml" });
+
+  const vttUrl = new URL(track.baseUrl);
+  vttUrl.searchParams.set("fmt", "vtt");
+  attempts.push({ url: vttUrl, type: "vtt" });
+
+  const vttAliasUrl = new URL(track.baseUrl);
+  vttAliasUrl.searchParams.set("fmt", "1");
+  attempts.push({ url: vttAliasUrl, type: "vtt" });
 
   const srv3Url = new URL(track.baseUrl);
   srv3Url.searchParams.set("fmt", "srv3");
@@ -225,7 +301,12 @@ async function downloadFromBase(track: WatchCaptionTrack): Promise<{ segments: C
     if (segments.length > 0) {
       return {
         segments,
-        source: attempt.type === "ttml" ? "watch:ttml" : "watch:srv3",
+        source:
+          attempt.type === "ttml"
+            ? "watch:ttml"
+            : attempt.type === "srv3"
+            ? "watch:srv3"
+            : "watch:vtt",
       };
     }
   }
