@@ -411,6 +411,7 @@ Progress: ███████████████████████�
 - **🗂️ Persistencia**: Nuevos módulos Convex (`transcriptions.ts`, `fragments.ts`, `mentionActions.ts`, `scanJobs.ts`)
 - **🧩 Procesamiento**: Filtro de keywords multi-idioma y extracción de contexto
 - **📺 Dashboard**: Controles para disparar transcripciones/detecciones y panel con fragmentos clasificados
+- **🎛️ Intake UI**: Formulario en `/dashboard` que registra fuentes vía `/api/youtube/scan` + `channelActions.scanSource`
 
 ### **Technical Deliverables Added:**
 ```

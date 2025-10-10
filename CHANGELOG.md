@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.1] - 2025-01-10 - **Dashboard Scanning UI**
+
+### Added
+- Formulario en el dashboard para registrar canales, playlists o videos y disparar el escaneo inicial
+- API pública `/api/youtube/scan` que valida URLs y delega en Convex la descarga de episodios
+- Acción `channelActions.scanSource` para crear/actualizar fuentes en Convex y poblar episodios automáticamente
+- Navegación en el header hacia la vista de episodios
+
+### Changed
+- `/dashboard/episodes` se consolidó como la ruta oficial para gestionar transcripciones y detecciones
+
 ## [0.5.0] - 2025-01-10 - **Fase 4 Complete** ✅
 
 ### 🎆 **MILESTONE: Mention Detection & Classification Implemented**

@@ -222,6 +222,13 @@ export default config
 3. **Nunca** commitear `.env.local`
 4. Confirmar que las claves de YouTube y OpenAI están activas antes de probar transcripciones/detección
 
+### Flujo manual de escaneo (local)
+1. Ejecuta `npx convex dev` en una terminal.
+2. En otra terminal, corre `npm run dev`.
+3. Inicia sesión en `http://localhost:3000` con el passcode.
+4. En **Inicio**, agrega la URL del canal/playlist/video y define la frecuencia de escaneo.
+5. Visita **Episodios** para revisar el contenido importado, solicitar transcripciones y lanzar la detección de menciones.
+
 ---
 
 ## 📝 Convenciones de Código
@@ -232,7 +239,7 @@ export default config
 - **Components**: PascalCase (`ScanInputForm.tsx`)
 - **Utilities**: camelCase (`url-parser.ts`)
 - **Folders**: kebab-case (`episodes/`, `youtube/`)
-- **API Routes**: kebab-case (`fetch-episodes/`)
+- **API Routes**: kebab-case (`scan/`)
 
 #### Variables & Functions
 ```typescript
@@ -306,36 +313,20 @@ export function EpisodeCard({ episodeId, onSelect }: EpisodeCardProps) {
 
 ### API Route Structure
 ```typescript
-// app/api/youtube/fetch-episodes/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { fetchYouTubeEpisodes } from '@/lib/integrations/youtube/episodes';
+// app/api/youtube/scan/route.ts
+import { NextResponse } from "next/server";
 
-export async function POST(request: NextRequest) {
-  try {
-    // 1. Parse & validate input
-    const body = await request.json();
-    const { channelUrl, dateRange } = body;
+export async function POST(request: Request) {
+  const { youtubeUrl, scanFrequency } = await request.json();
 
-    if (!channelUrl) {
-      return NextResponse.json(
-        { error: 'Channel URL is required' },
-        { status: 400 }
-      );
-    }
-
-    // 2. Business logic
-    const episodes = await fetchYouTubeEpisodes(channelUrl, dateRange);
-
-    // 3. Return response
-    return NextResponse.json({ episodes });
-
-  } catch (error) {
-    console.error('Error fetching episodes:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+  if (!youtubeUrl) {
+    return NextResponse.json({ error: "youtubeUrl is required" }, { status: 400 });
   }
+
+  // Invoca la acción de Convex que registra la fuente y descarga episodios
+  // await convex.action(api.channelActions.scanSource, {...})
+
+  return NextResponse.json({ ok: true });
 }
 ```
 

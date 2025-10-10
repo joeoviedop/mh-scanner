@@ -43,17 +43,16 @@ mh-scanner/
 │   ├── (auth)/                   # Auth route group
 │   │   └── login/                # Página de login con passcode
 │   ├── (dashboard)/              # Main app route group
-│   │   ├── page.tsx              # Dashboard principal / Input form
-│   │   ├── episodes/             # Listado de episodios
-│   │   │   ├── page.tsx          # Lista de episodios
-│   │   │   └── [id]/             # Detalle de episodio individual
-│   │   │       ├── page.tsx      # Vista de revisión (fragmentos + transcripción)
-│   │   │       └── loading.tsx
+│   │   ├── dashboard/
+│   │   │   ├── page.tsx          # Dashboard principal + formulario de escaneo
+│   │   │   └── episodes/         # Listado de episodios y fragmentos
+│   │   │       └── page.tsx
+│   │   ├── episodes/             # Redirección a /dashboard/episodes
 │   │   └── layout.tsx            # Layout del dashboard
 │   ├── api/                      # API Routes
 │   │   ├── youtube/              # Endpoints YouTube
-│   │   │   ├── fetch-episodes/
-│   │   │   └── fetch-captions/
+│   │   │   ├── fetch-captions/
+│   │   │   └── scan/
 │   │   ├── process/              # Processing endpoints
 │   │   │   ├── detect-mentions/
 │   │   │   └── classify-fragments/
@@ -90,10 +89,14 @@ mh-scanner/
 ├── convex/                       # Convex backend
 │   ├── schema.ts                 # Database schema
 │   ├── channels.ts               # Queries/mutations para canales
+│   ├── channelActions.ts         # Acciones para registrar fuentes y descargar episodios
 │   ├── episodes.ts               # Queries/mutations para episodios
 │   ├── transcriptions.ts         # Queries/mutations para transcripciones
+│   ├── transcriptionActions.ts   # Acciones para descarga de subtítulos
 │   ├── fragments.ts              # Queries/mutations para fragmentos detectados
+│   ├── mentionActions.ts         # Acciones para detección/clasificación de menciones
 │   ├── feedback.ts               # Queries/mutations para feedback
+│   ├── scanJobs.ts               # Utilidades para trabajos en background
 │   ├── crons.ts                  # Cron jobs configuration
 │   └── _generated/               # Generated Convex files
 │
@@ -158,7 +161,7 @@ mh-scanner/
 
 ### 1. Input & Scanning
 ```
-Usuario → ScanInputForm → API Route (/api/youtube/fetch-episodes)
+Usuario → ScanInputForm → API Route (/api/youtube/scan)
          ↓
     Convex (channels, episodes)
          ↓

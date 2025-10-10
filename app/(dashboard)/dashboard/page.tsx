@@ -1,12 +1,88 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+
+import { ScanInputForm } from "@/src/components/forms/ScanInputForm";
+
+type ScanStatus = {
+  variant: "success" | "error";
+  message: string;
+} | null;
+
 export default function DashboardPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, setStatus] = useState<ScanStatus>(null);
+
+  const handleSubmit = async ({
+    url,
+    type,
+    scanFrequency,
+  }: {
+    url: string;
+    type: "channel" | "playlist" | "video";
+    scanFrequency: "daily" | "weekly" | "manual";
+  }) => {
+    setIsSubmitting(true);
+    setStatus(null);
+
+    try {
+      const response = await fetch("/api/youtube/scan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ youtubeUrl: url, scanFrequency, sourceType: type }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        const message = data?.error ?? "No fue posible iniciar el escaneo";
+        throw new Error(message);
+      }
+
+      const summary = data.summary;
+      const processed = summary?.episodesProcessed ?? 0;
+      setStatus({
+        variant: "success",
+        message: `Escaneo iniciado correctamente. Episodios procesados: ${processed}. Revisa el progreso en la sección de episodios.`,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No fue posible iniciar el escaneo";
+      setStatus({ variant: "error", message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-900">Bienvenido al panel de VoyBien</h2>
+        <h2 className="text-xl font-semibold text-slate-900">Agregar fuente de YouTube</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Aquí podrás concentrar la investigación sobre salud mental en podcasts. Empieza cargando un
-          canal o playlist de YouTube para detectar menciones relevantes y decidir qué episodios deben
-          revisarse a detalle.
+          Ingresa la URL de un canal, playlist o video para registrar la fuente y descargar sus episodios.
+          El sistema prioriza episodios con subtítulos en español y los prepara para ser transcritos y
+          clasificados.
+        </p>
+        <ScanInputForm onSubmit={handleSubmit} isLoading={isSubmitting} className="mt-6" />
+        {status && (
+          <div
+            className={`mt-4 rounded-md border px-4 py-3 text-sm ${
+              status.variant === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-red-200 bg-red-50 text-red-700"
+            }`}
+          >
+            {status.message}
+          </div>
+        )}
+        <p className="mt-6 text-sm text-slate-600">
+          Cuando el escaneo termine, visita la sección de {" "}
+          <Link href="/dashboard/episodes" className="text-blue-600 hover:text-blue-800">
+            episodios
+          </Link>{" "}
+          para solicitar transcripciones y detectar menciones.
         </p>
       </section>
 
@@ -14,43 +90,30 @@ export default function DashboardPage() {
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-base font-semibold text-slate-900">1. Escanear contenido</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Ingresa la URL de un canal o playlist. El sistema priorizará episodios con subtítulos y te
-            mostrará un resumen de menciones relacionadas a terapia y salud mental.
+            Registra canales o playlists. El sistema descarga los metadatos de episodios y mantiene un
+            historial en Convex.
           </p>
         </article>
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-base font-semibold text-slate-900">2. Evaluar hallazgos</h3>
+          <h3 className="text-base font-semibold text-slate-900">2. Transcribir / Detectar</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Revisa el tono, la sensibilidad y la confianza de cada fragmento para decidir si amerita
-            respuesta, seguimiento o integración a campañas en curso.
+            Desde la vista de episodios puedes pedir transcripciones, ejecutar la detección de menciones
+            y revisar fragmentos clasificados.
           </p>
         </article>
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-base font-semibold text-slate-900">3. Registrar feedback</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Marca los hallazgos útiles para ajustar el ranking de menciones. Esto ayuda a priorizar los
-            fragmentos más accionables para el equipo.
+            Próximamente podrás marcar fragmentos útiles o irrelevantes para mejorar el ranking.
           </p>
         </article>
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-base font-semibold text-slate-900">4. Compartir y coordinar</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Exporta resultados a CSV o Google Sheets para informar a Operaciones, Terapia y Contenido
-            sin perder el contexto clave.
+            Exporta resultados y comparte hallazgos con Operaciones, Terapia y Contenido manteniendo el
+            contexto clave.
           </p>
         </article>
-      </section>
-
-      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-sm text-emerald-900">
-        <h3 className="text-base font-semibold">Próximos pasos en el MVP</h3>
-        <ul className="mt-2 list-disc space-y-2 pl-5">
-          <li>Habilitar el formulario para cargar canales y playlists de YouTube.</li>
-          <li>Conectar Convex para almacenar episodios, fragmentos y feedback del equipo.</li>
-          <li>
-            Integrar detección automática con OpenAI para clasificar tipo, tono y sensibilidad de cada
-            mención.
-          </li>
-        </ul>
       </section>
     </div>
   );

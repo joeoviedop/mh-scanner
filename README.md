@@ -30,6 +30,12 @@ npm run convex:deploy # Deploy Convex a producción
 2. Levanta el servidor: `npm run dev`
 3. Visita `http://localhost:3000`
 
+### Escanear una nueva fuente
+1. Inicia sesión con el passcode interno.
+2. En el dashboard (Inicio), pega la URL del canal/playlist/video y selecciona la frecuencia de escaneo.
+3. Envía el formulario para registrar la fuente y disparar el escaneo inicial.
+4. Dirígete a **Episodios** para solicitar transcripciones y ejecutar la detección de menciones sobre el contenido importado.
+
 
 ## ✅ **What's Completed**
 
@@ -54,6 +60,8 @@ npm run convex:deploy # Deploy Convex a producción
 - [x] Channel management functions (`convex/channels.ts`)
 - [x] Episode management functions (`convex/episodes.ts`)
 - [x] Scanning form UI component (`src/components/forms/ScanInputForm.tsx`)
+- [x] API pública para iniciar escaneos desde el dashboard (`/api/youtube/scan`)
+- [x] Acción Convex para registrar fuentes y descargar episodios (`convex/channelActions.ts`)
 - [x] Episodes listing UI component (`src/components/episodes/EpisodeList.tsx`)
 - [x] Infrastructure setup (NPM scripts, environment variables)
 

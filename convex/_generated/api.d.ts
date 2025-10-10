@@ -13,6 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as channelActions from "../channelActions.js";
 import type * as channels from "../channels.js";
 import type * as episodes from "../episodes.js";
 import type * as fragments from "../fragments.js";
@@ -30,6 +31,7 @@ import type * as transcriptions from "../transcriptions.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  channelActions: typeof channelActions;
   channels: typeof channels;
   episodes: typeof episodes;
   fragments: typeof fragments;
