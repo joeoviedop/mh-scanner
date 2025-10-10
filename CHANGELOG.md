@@ -4,6 +4,42 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-01-10 - **Fase 2 Complete** ✅
+
+### 🎆 **MILESTONE: Input & Scanning Infrastructure Implemented**
+**Progress: 50% Complete** - Ready for YouTube transcription and processing functionality
+
+### Added
+- **Complete YouTube Integration**:
+  - YouTube URL parser supporting channels, playlists, videos (`src/lib/youtube-parser.ts`)
+  - YouTube Data API client with rate limiting and error handling (`src/lib/youtube-api.ts`)
+  - Comprehensive type safety with Zod schemas
+- **Complete Convex Database**:
+  - Full schema with 6 tables: channels, episodes, transcriptions, fragments, feedback, scanJobs
+  - Channel management functions with CRUD operations (`convex/channels.ts`)
+  - Episode management functions with status tracking (`convex/episodes.ts`)
+  - 33 optimized database indexes automatically generated
+- **User Interface Components**:
+  - Professional scanning form with URL validation and preview (`src/components/forms/ScanInputForm.tsx`)
+  - Episodes listing with status indicators and stats (`src/components/episodes/EpisodeList.tsx`)
+  - Responsive design with loading states and error handling
+- **Infrastructure & Development**:
+  - Updated NPM scripts: `convex:dev` and `convex:deploy`
+  - Complete `.env.local.example` with all environment variables
+  - Enhanced dependencies: react-hook-form, @hookform/resolvers, zod, date-fns
+
+### Technical Implementation
+- **Database Schema**: Complete Convex schema with proper relationships and indexing
+- **API Integration**: YouTube Data API v3 with comprehensive error handling
+- **Type Safety**: Full TypeScript implementation with Zod validation
+- **Component Architecture**: Reusable, maintainable React components
+- **Development Workflow**: Enhanced build pipeline and validation
+
+### Changed
+- Updated project progress to 50% complete
+- Enhanced development commands and workflow
+- Improved documentation and architecture planning
+
 ## [0.2.0] - 2025-01-10 - **Fase 1 Complete** ✅
 
 ### 🎆 **MILESTONE: Authentication System Implemented**

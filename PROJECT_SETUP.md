@@ -33,7 +33,12 @@ Este documento describe las reglas de trabajo, configuraciones y convenciones pa
   "react": "19.1.0",
   "react-dom": "19.1.0",
   "typescript": "^5",
-  "tailwindcss": "^4.1.14"
+  "tailwindcss": "^4.1.14",
+  "convex": "^1.27.5",
+  "react-hook-form": "^7.64.0",
+  "@hookform/resolvers": "^5.2.2",
+  "zod": "^4.1.12",
+  "date-fns": "^4.1.0"
 }
 ```
 
@@ -356,6 +361,9 @@ Essential commands:
 - `npm run build` - Production build
 - `npm run lint` - Code linting
 - `npm run type-check` - TypeScript validation
+- `npm run format` - Code formatting with Prettier
+- `npm run convex:dev` - Start Convex development backend
+- `npm run convex:deploy` - Deploy Convex to production
 
 ---
 

@@ -210,17 +210,40 @@ ExportButtons → API Route (/api/export/csv o /google-sheets)
 
 ---
 
-## Modelos de Datos (Convex Schema)
+## Modelos de Datos (Convex Schema) - IMPLEMENTED ✅
 
 ### Channels
 ```typescript
 {
   _id: Id<"channels">,
-  channelId: string,
-  channelUrl: string,
-  channelName: string,
-  createdAt: number,
-  updatedAt: number
+  youtubeId: string, // Channel ID or Playlist ID
+  type: "channel" | "playlist",
+  title: string,
+  description: string,
+  thumbnailUrl?: string,
+  
+  // Channel-specific info
+  subscriberCount?: string,
+  videoCount?: string,
+  customUrl?: string,
+  
+  // Playlist-specific info  
+  channelId?: string, // Parent channel if playlist
+  channelTitle?: string,
+  itemCount?: number,
+  
+  // Scanning configuration
+  scanEnabled: boolean,
+  lastScanAt?: number,
+  scanFrequency: "daily" | "weekly" | "manual",
+  
+  // Metadata
+  originalUrl: string,
+  displayName?: string,
+  addedAt: number,
+  addedBy: string,
+  status: "active" | "paused" | "error" | "deleted",
+  errorMessage?: string
 }
 ```
 
@@ -228,16 +251,39 @@ ExportButtons → API Route (/api/export/csv o /google-sheets)
 ```typescript
 {
   _id: Id<"episodes">,
-  channelId: Id<"channels">,
-  videoId: string,
+  videoId: string, // YouTube video ID (11 chars)
   title: string,
-  publishedAt: string,
-  duration: number, // en segundos
-  thumbnailUrl: string,
+  description: string,
+  channelId: string, // YouTube channel ID
+  channelTitle: string,
+  publishedAt: number, // Unix timestamp
+  duration: string, // ISO 8601 duration
+  durationSeconds: number, // Duration in seconds
+  thumbnailUrl?: string,
+  
+  // YouTube stats
+  viewCount?: string,
+  likeCount?: string,
+  commentCount?: string,
+  tags?: string[],
+  
+  // Internal tracking
+  sourceChannel: Id<"channels">,
+  discoveredAt: number,
+  
+  // Processing status
   hasTranscription: boolean,
-  status: "pending" | "processing" | "processed" | "error",
-  createdAt: number,
-  updatedAt: number
+  transcriptionFetchedAt?: number,
+  transcriptionError?: string,
+  hasBeenProcessed: boolean,
+  processedAt?: number,
+  processingError?: string,
+  
+  // Results
+  hasMentions: boolean,
+  mentionCount: number,
+  averageConfidence?: number,
+  status: "discovered" | "transcribing" | "processing" | "completed" | "error" | "skipped"
 }
 ```
 
