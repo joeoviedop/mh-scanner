@@ -1,5 +1,8 @@
 const WATCH_URL = "https://www.youtube.com/watch";
 
+const CONSENT_COOKIE =
+  "CONSENT=YES+cb.20210328-17-p0.en+FX+678; PREF=tz=UTC&hl=en; GL=US";
+
 type CaptionTrackName = {
   simpleText?: string;
   runs?: Array<{ text?: string }>;
@@ -31,29 +34,94 @@ export type WatchCaptionTrack = {
 };
 
 function extractJsonSegment(html: string, marker: string): string | null {
-  const startIndex = html.indexOf(marker);
-  if (startIndex === -1) return null;
+  let searchIndex = 0;
 
-  let jsonStart = startIndex + marker.length;
-  while (jsonStart < html.length && /\s/.test(html[jsonStart])) {
-    jsonStart += 1;
-  }
+  while (searchIndex < html.length) {
+    const startIndex = html.indexOf(marker, searchIndex);
+    if (startIndex === -1) {
+      return null;
+    }
 
-  if (jsonStart >= html.length || html[jsonStart] !== "{") {
-    return null;
-  }
+    let jsonStart = startIndex + marker.length;
+    while (jsonStart < html.length && /\s/.test(html[jsonStart])) {
+      jsonStart += 1;
+    }
 
-  let depth = 0;
-  let index = jsonStart;
-  for (; index < html.length; index += 1) {
-    const char = html[index];
-    if (char === "{") depth += 1;
-    else if (char === "}") {
-      depth -= 1;
-      if (depth === 0) {
-        return html.slice(jsonStart, index + 1);
+    if (jsonStart >= html.length) {
+      return null;
+    }
+
+    if (html.startsWith("JSON.parse", jsonStart)) {
+      jsonStart += "JSON.parse".length;
+
+      while (jsonStart < html.length && /\s/.test(html[jsonStart])) {
+        jsonStart += 1;
+      }
+
+      if (jsonStart >= html.length || html[jsonStart] !== "(") {
+        searchIndex = startIndex + marker.length;
+        continue;
+      }
+
+      jsonStart += 1;
+
+      while (jsonStart < html.length && /\s/.test(html[jsonStart])) {
+        jsonStart += 1;
+      }
+
+      const quote = html[jsonStart];
+      if (quote !== '"' && quote !== "'") {
+        searchIndex = startIndex + marker.length;
+        continue;
+      }
+
+      jsonStart += 1;
+      let jsonString = "";
+      let escaped = false;
+
+      for (let index = jsonStart; index < html.length; index += 1) {
+        const char = html[index];
+        if (escaped) {
+          jsonString += char;
+          escaped = false;
+          continue;
+        }
+
+        if (char === "\\") {
+          escaped = true;
+          continue;
+        }
+
+        if (char === quote) {
+          return jsonString;
+        }
+
+        jsonString += char;
+      }
+
+      searchIndex = startIndex + marker.length;
+      continue;
+    }
+
+    if (html[jsonStart] !== "{") {
+      searchIndex = startIndex + marker.length;
+      continue;
+    }
+
+    let depth = 0;
+    let index = jsonStart;
+    for (; index < html.length; index += 1) {
+      const char = html[index];
+      if (char === "{") depth += 1;
+      else if (char === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          return html.slice(jsonStart, index + 1);
+        }
       }
     }
+
+    searchIndex = startIndex + marker.length;
   }
 
   return null;
@@ -74,16 +142,25 @@ function parseName(name?: CaptionTrackName): string | undefined {
 }
 
 export async function fetchWatchPageTracks(videoId: string): Promise<WatchCaptionTrack[]> {
-  const url = `${WATCH_URL}?v=${encodeURIComponent(videoId)}&hl=en`;
+  const url = new URL(WATCH_URL);
+  url.searchParams.set("v", videoId);
+  url.searchParams.set("hl", "en");
+  url.searchParams.set("gl", "US");
+  url.searchParams.set("has_verified", "1");
+  url.searchParams.set("bpctr", "9999999999");
 
-  const response = await fetch(url, {
+  const response = await fetch(url.toString(), {
     headers: {
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
         "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       "Accept-Language": "en-US,en;q=0.9",
       Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      Cookie: CONSENT_COOKIE,
+      Referer: "https://www.youtube.com/",
     },
+    redirect: "follow",
+    cache: "no-store",
   });
 
   if (!response.ok) {
