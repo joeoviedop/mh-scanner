@@ -230,14 +230,9 @@ export default config
 5. El backend omite Shorts (< 2 minutos) para centrarse en episodios largos.
 6. Visita **Episodios** para revisar el contenido importado, solicitar transcripciones y lanzar la detección de menciones.
 
-### (Opcional) Credenciales OAuth
-El pipeline de transcripciones usa subtítulos públicos disponibles en la página del video (`ytInitialPlayerResponse`). No es necesario configurar OAuth para operar la webapp.
-
-Solo si en el futuro necesitas acceder a pistas privadas o habilitadas para propietarios:
-1. Habilita **YouTube Data API v3** en Google Cloud.
-2. Crea un **OAuth Client (Desktop app)** y anota `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`.
-3. Usa [OAuth 2.0 Playground](https://developers.google.com/oauthplayground) para obtener un `GOOGLE_REFRESH_TOKEN` con el scope `https://www.googleapis.com/auth/youtube.force-ssl`.
-4. Define las variables en Convex (`npx convex env set ...`) y reinicia `npx convex dev`.
+### (Opcional) Credenciales externas
+- **OAuth YouTube:** Solo necesaria si requieres subtítulos privados. Sigue los pasos anteriores (`GOOGLE_CLIENT_ID/SECRET/REFRESH_TOKEN`).
+- **Apify:** Configura `APIFY_TOKEN` (y opcionalmente `APIFY_ACTOR_ID`) si quieres que el backend use el actor público `pintostudio/youtube-transcript-scraper` como último recurso. Usa `npx convex env set APIFY_TOKEN <token>` y reinicia `npx convex dev`.
 
 ---
 

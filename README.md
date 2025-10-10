@@ -37,10 +37,11 @@ npm run convex:deploy # Deploy Convex a producción
 4. El escaneo omite automáticamente Shorts (videos < 2 minutos) para enfocarse en episodios largos.
 5. Dirígete a **Episodios** para solicitar transcripciones y ejecutar la detección de menciones sobre el contenido importado.
 
-### Configuración de credenciales de YouTube
+### Configuración de credenciales externas
 1. **Obligatoria:** `YOUTUBE_API_KEY` para listar canales y episodios con la Data API v3.
-2. **Opcional:** credenciales OAuth (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`) solo si en el futuro se requiere acceder a subtítulos privados. El flujo actual usa subtítulos públicos del watch page, por lo que no es necesario configurarlas.
-3. Define las variables en Convex con `npx convex env set <NOMBRE> <valor>`. Solo `YOUTUBE_API_KEY` es requerida.
+2. **Opcional (OAuth YouTube):** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` sólo si en el futuro necesitas subtítulos privados del propietario.
+3. **Opcional (Apify):** `APIFY_TOKEN` para habilitar el fallback que usa el actor `pintostudio/youtube-transcript-scraper` cuando YouTube no expone subtítulos públicos.
+4. Define las variables en Convex con `npx convex env set <NOMBRE> <valor>` y reinicia `npx convex dev`.
 
 
 ## ✅ **What's Completed**
@@ -72,7 +73,7 @@ npm run convex:deploy # Deploy Convex a producción
 - [x] Infrastructure setup (NPM scripts, environment variables)
 
 - [x] API route para solicitar transcripciones (`/api/youtube/fetch-captions`)
-- [x] Cliente YouTube Captions con priorización en español y fallback público (`lib/integrations/youtube/captions.ts`, `lib/integrations/youtube/watchPage.ts`)
+- [x] Cliente YouTube Captions con priorización en español y fallback público (`lib/integrations/youtube/captions.ts`, `lib/integrations/youtube/watchPage.ts`, `lib/integrations/apify/transcript.ts`)
 - [x] Omisión de Shorts en el escaneo y mensajes claros cuando no hay subtítulos públicos
 - [x] Acciones Convex para orquestar trabajos de transcripción (`convex/transcriptionActions.ts`, `convex/scanJobs.ts`)
 - [x] Persistencia de transcripciones y coincidencias iniciales en Convex (`convex/transcriptions.ts`)

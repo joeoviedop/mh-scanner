@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Conversión automática de pistas `srv3` a segmentos (misma estructura TTML)
 - Soporte para subtítulos WebVTT y traducciones automáticas (`tlang`) desde timedtext
 - Registro enriquecido de depuración cuando no se encuentran subtítulos públicos
+- Integración opcional con Apify (`lib/integrations/apify/transcript.ts`) para obtener transcripciones cuando YouTube no expone subtítulos públicos
 
 ### Changed
 - El flujo de transcripción ya no requiere OAuth; `lib/integrations/youtube/captions.ts` prioriza subtítulos públicos (watch page + timedtext)
