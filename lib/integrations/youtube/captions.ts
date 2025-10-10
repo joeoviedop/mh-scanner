@@ -337,6 +337,20 @@ export async function fetchCaptions(videoId: string, accessToken: string): Promi
   const items = data.items ?? [];
 
   const chosen = pickCaptionTrack(items);
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[captions] available tracks", JSON.stringify(items.map((item) => ({
+      id: item.id,
+      language: item.snippet?.language,
+      trackKind: item.snippet?.trackKind,
+      name: item.snippet?.name?.simpleText,
+    })), null, 2));
+    console.log("[captions] chosen track", {
+      id: chosen?.id,
+      language: chosen?.snippet?.language,
+      trackKind: chosen?.snippet?.trackKind,
+      name: chosen?.snippet?.name?.simpleText,
+    });
+  }
   if (!chosen) {
     return null;
   }
@@ -358,16 +372,19 @@ export async function fetchCaptions(videoId: string, accessToken: string): Promi
   raw = timedText.text;
 
   if (!raw) {
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[captions] timedtext attempts", timedText.attempts);
+    }
     const downloadUrl = new URL(`${CAPTION_ENDPOINT}/${captionId}`);
     downloadUrl.searchParams.set("tfmt", "ttml");
 
     try {
       raw = await fetchText(downloadUrl.toString(), authHeaders);
     } catch (error) {
-      if (error instanceof YouTubeCaptionsError && error.status === 401) {
+      if (error instanceof YouTubeCaptionsError && (error.status === 401 || error.status === 403)) {
         const summary = timedText.attempts.map((attempt) => `${attempt.status}:${attempt.query}`).join(" | ");
         throw new YouTubeCaptionsError(
-          `Captions require OAuth authorization (attempts: ${summary || "none"})`,
+          `${error.message} (timedtext attempts: ${summary || "none"})`,
           error.status,
         );
       }
