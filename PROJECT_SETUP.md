@@ -43,11 +43,12 @@ Este documento describe las reglas de trabajo, configuraciones y convenciones pa
 ```
 
 ### Integraciones
-- **Authentication**: Passcode-based internal authentication
-- **YouTube Data API v3**: Listar videos (Fase 2+)
-- **OpenAI API**: GPT-4 mini para clasificación (Fase 4+)
+- **Authentication**: Passcode-based internal authentication (Fase 1+)
+- **YouTube Data API v3**: Descubrimiento de canales y episodios (Fase 2+)
+- **YouTube Captions API**: Descarga de transcripciones priorizando español (Fase 3+)
+- **OpenAI API**: GPT-4 mini para clasificación de fragmentos (Fase 4+)
+- **Convex**: Database + jobs + acciones de orquestación (Fase 2+)
 - **Google Sheets API**: Exportación de resultados (Fase 7+)
-- **Convex**: Database backend (Fase 2+)
 
 ---
 
@@ -69,7 +70,10 @@ Seguir la estructura definida en `ARCHITECTURE.md`. Reglas clave:
 
 ### `/lib`
 - **integrations/**: Un folder por servicio externo
+- `integrations/llm`: Cliente OpenAI y prompts
+- `integrations/youtube`: Clientes Data API y Captions
 - **processing/**: Lógica core de negocio
+- `processing/keyword-filter.ts`: Filtro de keywords y ventana de contexto
 - **utils/**: Funciones auxiliares puras
 - **types/**: Tipos compartidos entre módulos
 
@@ -77,6 +81,9 @@ Seguir la estructura definida en `ARCHITECTURE.md`. Reglas clave:
 - Cada entidad tiene su propio archivo (channels.ts, episodes.ts, etc.)
 - Usar queries para lectura, mutations para escritura
 - Actions para llamadas externas (YouTube API, OpenAI, etc.)
+- `scanJobs.ts` para gestionar trabajos en background
+- `transcriptionActions.ts` y `mentionActions.ts` para pipelines de transcripción y detección
+- `transcriptions.ts` y `fragments.ts` para persistencia de textos y hallazgos
 
 ---
 
@@ -213,6 +220,7 @@ export default config
 1. Copiar `.env.local.example` a `.env.local`
 2. Llenar todas las variables requeridas
 3. **Nunca** commitear `.env.local`
+4. Confirmar que las claves de YouTube y OpenAI están activas antes de probar transcripciones/detección
 
 ---
 
@@ -364,6 +372,8 @@ Essential commands:
 - `npm run format` - Code formatting with Prettier
 - `npm run convex:dev` - Start Convex development backend
 - `npm run convex:deploy` - Deploy Convex to production
+- `curl -X POST /api/youtube/fetch-captions` - Endpoint para disparar transcripciones (usado por UI)
+- `curl -X POST /api/process/detect-mentions` - Endpoint para detección/clasificación (usado por UI)
 
 ---
 

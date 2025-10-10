@@ -15,6 +15,11 @@ import type {
 } from "convex/server";
 import type * as channels from "../channels.js";
 import type * as episodes from "../episodes.js";
+import type * as fragments from "../fragments.js";
+import type * as mentionActions from "../mentionActions.js";
+import type * as scanJobs from "../scanJobs.js";
+import type * as transcriptionActions from "../transcriptionActions.js";
+import type * as transcriptions from "../transcriptions.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -27,6 +32,11 @@ import type * as episodes from "../episodes.js";
 declare const fullApi: ApiFromModules<{
   channels: typeof channels;
   episodes: typeof episodes;
+  fragments: typeof fragments;
+  mentionActions: typeof mentionActions;
+  scanJobs: typeof scanJobs;
+  transcriptionActions: typeof transcriptionActions;
+  transcriptions: typeof transcriptions;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

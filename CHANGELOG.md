@@ -4,6 +4,59 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-01-10 - **Fase 4 Complete** ✅
+
+### 🎆 **MILESTONE: Mention Detection & Classification Implemented**
+**Progress: 70% Complete** - Episodios listos con hallazgos clasificados por IA
+
+### Added
+- **Keyword Detection Pipeline**
+  - `lib/processing/keyword-filter.ts` para coincidencias con ventana de contexto ±45s
+  - Nuevas listas de keywords normalizadas (`lib/constants/therapy-keywords.ts`)
+- **OpenAI GPT-4 mini Integration**
+  - Cliente tipado con respuesta JSON (`lib/integrations/llm/openai.ts`)
+  - Acción Convex `mentionActions.detectMentionsForEpisode` con soporte de scanJobs
+- **Fragments Persistence & API**
+  - Mutaciones y queries en `convex/fragments.ts`
+  - Endpoint `/api/episodes/[episodeId]/fragments` para consumo desde el dashboard
+- **Dashboard Enhancements**
+  - Vista de fragmentos clasificados en `app/(dashboard)/episodes/EpisodesPageClient.tsx`
+  - Controles para disparar detección de menciones desde la UI
+
+### Changed
+- Actualización de `convex/scanJobs.ts` para manejar nuevos tipos de trabajos
+- `convex/episodes.ts` ahora agrega métricas de menciones (conteo y confianza promedio)
+
+### Validation
+- `npm run lint`
+- `npm run type-check`
+
+## [0.4.0] - 2025-01-10 - **Fase 3 Complete** ✅
+
+### 🎆 **MILESTONE: Transcription & Processing Implemented**
+**Progress: 60% Complete** - Transcripciones automáticas listas para análisis
+
+### Added
+- **YouTube Captions Pipeline**
+  - Cliente TTML con priorización de español (`lib/integrations/youtube/captions.ts`)
+  - Acción Convex `transcriptionActions.fetchCaptionsForEpisode`
+  - Mutaciones `convex/transcriptions.ts` para guardar segmentos y metadata
+- **Scan Jobs Support**
+  - Nuevo módulo `convex/scanJobs.ts` para crear/actualizar jobs
+- **API Routes**
+  - `/api/youtube/fetch-captions` para solicitar transcripciones
+- **Dashboard Enhancements**
+  - Actualización de `EpisodeList.tsx` con controles de transcripción
+  - Nueva página `app/(dashboard)/episodes/page.tsx` + cliente asociado
+
+### Changed
+- `convex/episodes.ts` amplió estados (`transcribing`) y tiempos de procesamiento
+- README/WARP actualizados a reflejar progreso y comandos
+
+### Validation
+- `npm run lint`
+- `npm run type-check`
+
 ## [0.3.0] - 2025-01-10 - **Fase 2 Complete** ✅
 
 ### 🎆 **MILESTONE: Input & Scanning Infrastructure Implemented**

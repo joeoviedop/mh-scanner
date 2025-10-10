@@ -19,6 +19,8 @@ interface Episode {
   likeCount?: string;
   commentCount?: string;
   hasTranscription: boolean;
+  transcriptionFetchedAt?: number | null;
+  transcriptionError?: string | null;
   hasBeenProcessed: boolean;
   hasMentions: boolean;
   mentionCount: number;
@@ -32,6 +34,10 @@ interface EpisodeListProps {
   error?: string;
   onEpisodeClick?: (episode: Episode) => void;
   showChannel?: boolean;
+  onFetchTranscription?: (episode: Episode) => void;
+  fetchingTranscriptionIds?: string[];
+  onDetectMentions?: (episode: Episode) => void;
+  detectingMentionIds?: string[];
   className?: string;
 }
 
@@ -101,6 +107,10 @@ export function EpisodeList({
   error,
   onEpisodeClick,
   showChannel = true,
+  onFetchTranscription,
+  fetchingTranscriptionIds = [],
+  onDetectMentions,
+  detectingMentionIds = [],
   className = "",
 }: EpisodeListProps) {
   if (error) {
@@ -223,10 +233,22 @@ export function EpisodeList({
                   {/* Processing Indicators */}
                   <div className="text-right text-xs space-y-1">
                     {episode.hasTranscription && (
-                      <div className="text-green-600">📝 Transcribed</div>
+                      <div className="text-green-600">
+                        📝 Transcribed
+                        {episode.transcriptionFetchedAt && (
+                          <span className="block text-[10px] text-gray-500">
+                            {formatDistanceToNow(new Date(episode.transcriptionFetchedAt), { addSuffix: true })}
+                          </span>
+                        )}
+                      </div>
                     )}
                     {episode.hasBeenProcessed && (
                       <div className="text-blue-600">🔍 Processed</div>
+                    )}
+                    {episode.status === "error" && episode.transcriptionError && (
+                      <div className="text-red-600">
+                        ⚠️ {episode.transcriptionError}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -240,7 +262,7 @@ export function EpisodeList({
               )}
 
               {/* Quick Actions */}
-              {onEpisodeClick && (
+              {(onEpisodeClick || onFetchTranscription) && (
                 <div className="flex items-center gap-2 mt-3">
                   <a
                     href={`https://www.youtube.com/watch?v=${episode.videoId}`}
@@ -252,11 +274,11 @@ export function EpisodeList({
                     🔗 Open on YouTube
                   </a>
                   
-                  {episode.hasMentions && (
+                  {episode.hasMentions && onEpisodeClick && (
                     <span className="text-xs text-gray-400">•</span>
                   )}
                   
-                  {episode.hasMentions && (
+                  {episode.hasMentions && onEpisodeClick && (
                     <button
                       className="text-xs text-green-600 hover:text-green-800"
                       onClick={(e) => {
@@ -266,6 +288,54 @@ export function EpisodeList({
                     >
                       👁️ View Mentions
                     </button>
+                  )}
+                  {onFetchTranscription && !episode.hasTranscription && (
+                    <>
+                      <span className="text-xs text-gray-400">•</span>
+                      <button
+                        className="text-xs text-purple-600 hover:text-purple-800 disabled:text-gray-400"
+                        disabled={fetchingTranscriptionIds.includes(episode._id) || episode.status === "transcribing"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onFetchTranscription(episode);
+                        }}
+                      >
+                        {fetchingTranscriptionIds.includes(episode._id) || episode.status === "transcribing"
+                          ? "⏳ Fetching transcript"
+                          : "📝 Fetch transcript"}
+                      </button>
+                    </>
+                  )}
+                  {onFetchTranscription && episode.status === "error" && (
+                    <>
+                      <span className="text-xs text-gray-400">•</span>
+                      <button
+                        className="text-xs text-red-600 hover:text-red-800"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onFetchTranscription(episode);
+                        }}
+                      >
+                        🔄 Retry transcription
+                      </button>
+                    </>
+                  )}
+                  {onDetectMentions && episode.hasTranscription && (
+                    <>
+                      <span className="text-xs text-gray-400">•</span>
+                      <button
+                        className="text-xs text-emerald-600 hover:text-emerald-800 disabled:text-gray-400"
+                        disabled={detectingMentionIds.includes(episode._id) || episode.status === "processing"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDetectMentions(episode);
+                        }}
+                      >
+                        {detectingMentionIds.includes(episode._id) || episode.status === "processing"
+                          ? "🔍 Detecting mentions"
+                          : "🧠 Detect mentions"}
+                      </button>
+                    </>
                   )}
                 </div>
               )}

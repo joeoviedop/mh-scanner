@@ -9,7 +9,7 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import type { Doc, Id } from "./_generated/dataModel";
+import type { Doc } from "./_generated/dataModel";
 
 // Query: Get all channels
 export const list = query({
@@ -210,10 +210,9 @@ export const updateLastScan = mutation({
   args: {
     channelId: v.id("channels"),
     timestamp: v.optional(v.number()), // If not provided, uses current time
-    episodeCount: v.optional(v.number()),
     errorMessage: v.optional(v.string()),
   },
-  handler: async (ctx, { channelId, timestamp, episodeCount, errorMessage }) => {
+  handler: async (ctx, { channelId, timestamp, errorMessage }) => {
     const updateData: Partial<Doc<"channels">> = {
       lastScanAt: timestamp ?? Date.now(),
     };

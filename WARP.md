@@ -10,8 +10,8 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 - 📊 Export results to CSV/Google Sheets for analysis
 - 🎯 Enable content collaboration and market analysis
 
-**Status**: Fase 2 Complete ✅ → Ready for Fase 3: Transcription & Processing (MVP v0.1)
-**Progress**: 50% complete - Authentication and Input/Scanning infrastructure complete
+**Status**: Fase 4 Complete ✅ → Ready for Fase 5: Review Interface (MVP v0.1)
+**Progress**: 70% completo - Transcripciones automáticas y clasificación asistida por IA listas
 **Domain**: `internal.voybien.com` (internal tool, not indexable)
 
 ## Architecture Overview
@@ -124,19 +124,19 @@ npx convex dev --until-success --clear
 - [x] Form validation and UI components
 - [x] Infrastructure setup and build pipeline
 
-### Fase 3: Transcription Fetching (3-5 days)
-- YouTube Captions API integration
-- Spanish caption prioritization
-- Convex schema for transcriptions with timestamps
-- Error handling for videos without captions
+### ✅ Fase 3: Transcription Fetching (3-5 days)
+- YouTube Captions API integration con priorización de español
+- Convex schema y funciones para guardar transcripciones segmentadas
+- Acciones y jobs para orquestar descargas y reintentos
+- Manejo de errores para videos sin subtítulos disponibles
 
-### Fase 4: Mention Detection & Classification (7-10 days)
-- Keyword filter for initial mention detection
-- Context extraction (±45 seconds around matches)
-- OpenAI GPT-4 mini integration for classification
-- Fragment storage with metadata (type, tone, sensitivity, confidence)
+### ✅ Fase 4: Mention Detection & Classification (7-10 días)
+- Filtro de keywords y ventana de contexto (±45s)
+- Clasificación con GPT-4 mini, confianza y etiquetas sensibles
+- Persistencia de fragmentos y actualización de episodios
+- UI en dashboard para disparar detección y revisar hallazgos
 
-### Fase 5: Review Interface (5-7 days)
+### Fase 5: Review Interface (5-7 días)
 - Episode detail page with fragment listings
 - YouTube player integration with timestamp linking
 - Fragment cards with classification badges
@@ -329,17 +329,17 @@ npx convex dev --until-success --clear
 
 ## 📊 Current Progress Status
 
-### 📈 **Overall Progress: 50% Complete**
+### 📈 **Overall Progress: 70% Complete**
 
 ```
-Progress: ████████████████████░░░░░░░░░░░░░░░░░░░░ 50% Complete
+Progress: ████████████████████████████░░░░░░░░░░░░ 70% Complete
 
 ✅ Phase 0: Setup & Foundation (COMPLETED)
 ✅ Phase 1: Authentication (COMPLETED) 
-✅ Phase 2: Input & Scanning (COMPLETED) ← JUST FINISHED
-🔄 Phase 3: Transcription & Processing (NEXT)
-⏳ Phase 4: Mention Detection & Classification
-⏳ Phase 5: Review Interface
+✅ Phase 2: Input & Scanning (COMPLETED)
+✅ Phase 3: Transcription & Processing (COMPLETED)
+✅ Phase 4: Mention Detection & Classification (COMPLETED) ← JUST FINISHED
+🔄 Phase 5: Review Interface (NEXT)
 ⏳ Phase 6: Feedback & Re-ranking
 ⏳ Phase 7: Export Functionality
 ⏳ Phase 8: Polish & Testing
@@ -374,70 +374,79 @@ Progress: ████████████████████░░░�
 - [x] **Episodes List UI**: Complete listing with status indicators (`src/components/episodes/EpisodeList.tsx`)
 - [x] **Infrastructure**: NPM scripts, environment variables, build pipeline
 
-### 🔄 **Next Phase: Phase 3 - Transcription & Processing**
+#### **Phase 3: Transcription & Processing (100% COMPLETE)**
+- [x] **YouTube Captions Client**: Priorización de subtítulos en español y parsing TTML (`lib/integrations/youtube/captions.ts`)
+- [x] **Acciones Convex**: `transcriptionActions.fetchCaptionsForEpisode` orquesta scanJobs y estados
+- [x] **Persistencia de Transcripciones**: Mutaciones/queries dedicadas (`convex/transcriptions.ts`)
+- [x] **Actualización de Episodios**: Estados `transcribing` + métricas (`convex/episodes.updateProcessingStatus`)
+- [x] **UI del Dashboard**: Botones para solicitar transcripciones y ver progreso
+
+#### **Phase 4: Mention Detection & Classification (100% COMPLETE)** 🎉
+- [x] **Filtro de Keywords**: Ventana de contexto ±45s (`lib/processing/keyword-filter.ts`)
+- [x] **Cliente OpenAI**: GPT-4 mini con respuesta JSON (`lib/integrations/llm/openai.ts`)
+- [x] **Acción de Detección**: `mentionActions.detectMentionsForEpisode` (Convex + scanJobs)
+- [x] **Persistencia de Fragmentos**: Mutaciones (`convex/fragments.ts`) y enlaces con timestamps
+- [x] **Experiencia de Revisión Inicial**: Dashboard muestra fragmentos detectados con metadatos
+
+### 🔄 **Next Phase: Phase 5 - Review Interface**
 
 #### **Immediate Next Steps:**
-1. **API Routes Implementation**
-   - `/api/youtube/fetch-episodes` - Fetch episodes from YouTube channels/playlists
-   - `/api/youtube/fetch-captions` - Get transcriptions from YouTube
-   - `/api/process/detect-mentions` - Process transcriptions for therapy mentions
+1. **Vista de Episodio**
+   - Página detalle con reproductor incrustado y lista de fragmentos
+   - Sincronización de timestamps y resaltado de transcripción
 
-2. **YouTube Captions Integration**
-   - Fetch automatic captions with Spanish prioritization
-   - Process and clean transcription text
-   - Store with timestamps in Convex
+2. **Herramientas de Revisión**
+   - Controles de feedback (Útil / No útil)
+   - Indicadores de sensibilidad y confianza
 
-3. **Processing Pipeline Foundation**
-   - Keyword filtering for initial mention detection
-   - Context extraction (±45 seconds around matches)
-   - Preparation for GPT-4 mini integration
+3. **Preparación para Re-ranking**
+   - Recolección de feedback para alimentar fase 6
+   - Persistencia de estados de revisión y métricas básicas
 
 ## 🔄 Recent Major Updates
 
-### **Phase 2 Implementation (Just Completed - January 2025)**
-- **🗄️ Database Architecture**: Complete Convex schema with channels, episodes, transcriptions, fragments, feedback, and scanJobs tables
-- **🔌 YouTube Integration**: Robust YouTube Data API client with comprehensive error handling and rate limiting
-- **🎯 URL Processing**: Smart YouTube URL parser supporting all formats (channels, playlists, videos)
-- **💻 User Interface**: Professional scanning form and episodes listing components
-- **🏗️ Infrastructure**: Complete build pipeline, environment setup, and development workflow
-- **📊 Data Models**: TypeScript-first approach with Zod validation and complete type safety
-- **🔧 Development Tools**: Added `convex:dev` and `convex:deploy` scripts, updated dependencies
+### **Phase 3 & 4 Implementation (January 2025)**
+- **📝 Transcripciones**: Cliente YouTube Captions + acciones Convex para descargas y reintentos
+- **🧠 Clasificación IA**: Integración GPT-4 mini con respuesta JSON y control de confianza
+- **🗂️ Persistencia**: Nuevos módulos Convex (`transcriptions.ts`, `fragments.ts`, `mentionActions.ts`, `scanJobs.ts`)
+- **🧩 Procesamiento**: Filtro de keywords multi-idioma y extracción de contexto
+- **📺 Dashboard**: Controles para disparar transcripciones/detecciones y panel con fragmentos clasificados
 
 ### **Technical Deliverables Added:**
 ```
 convex/
-├── schema.ts (332 lines) - Complete database schema
-├── channels.ts (299 lines) - Channel management functions
-├── episodes.ts (424 lines) - Episode management functions
-└── _generated/ - Auto-generated TypeScript types
+├── transcriptions.ts - Mutaciones/queries para guardar transcripciones
+├── transcriptionActions.ts - Acción para descarga de captions
+├── mentionActions.ts - Pipeline de detección y clasificación
+├── fragments.ts - Persistencia de fragmentos detectados
+├── scanJobs.ts - Utilidades para trabajos de background
 
-src/lib/
-├── youtube-parser.ts (187 lines) - URL parsing utility
-└── youtube-api.ts (443 lines) - YouTube API client
+lib/
+├── integrations/youtube/captions.ts - Cliente YouTube Captions
+├── integrations/llm/openai.ts - Cliente OpenAI GPT-4 mini
+└── processing/keyword-filter.ts - Filtro de keywords y contexto
 
-src/components/
-├── forms/ScanInputForm.tsx (252 lines) - Scanning form
-└── episodes/EpisodeList.tsx (280 lines) - Episodes listing
+app/(dashboard)/episodes/
+├── page.tsx - Página del panel de episodios
+└── EpisodesPageClient.tsx - UI para gestión de transcripciones y fragmentos
 ```
 
 ---
 
-## 🚀 **READY FOR PHASE 3 - TRANSCRIPTION & PROCESSING**
+## 🚀 **READY FOR PHASE 5 - REVIEW INTERFACE**
 
 ### ✅ **Current State:**
-- **Authentication**: Production-ready passcode system ✅
-- **Database**: Full Convex schema with 33 optimized indexes ✅
-- **YouTube Integration**: Complete API client with all endpoints ✅
-- **UI Components**: Scanning form and episodes listing ✅
-- **Build Pipeline**: All validations passing (TypeScript, ESLint, build) ✅
-- **Environment**: Production-ready configuration ✅
+- **Autenticación**: Sistema de passcode en producción ✅
+- **Captura de Datos**: Escaneo YouTube + transcripciones automáticas ✅
+- **Procesamiento**: Detección y clasificación de menciones con GPT-4 mini ✅
+- **Persistencia**: Convex con canales, episodios, transcripciones, fragmentos y jobs ✅
+- **Dashboard**: Gestión de episodios con disparadores y vista inicial de fragmentos ✅
 
-### 🎯 **Phase 3 Objectives:**
-1. **API Routes**: Implement YouTube data fetching endpoints
-2. **Captions Integration**: YouTube transcription fetching with Spanish priority
-3. **Background Processing**: Job queue system using Convex scanJobs
-4. **Text Processing**: Transcription cleaning and preparation
-5. **Keyword Detection**: Initial therapy mention filtering
+### 🎯 **Phase 5 Objectives:**
+1. **Review UI**: Página detalle por episodio con reproductor y sincronización
+2. **Feedback Loop**: Botones Útil / No útil y registro en Convex
+3. **Transcript Viewer**: Resaltado de fragmentos dentro de la transcripción completa
+4. **Ready for Phase 6**: Recolectar datos para re-ranking automático
 
-**Status**: Ready to implement transcription fetching and processing pipeline
-**Next Coding Session**: Create API routes for YouTube data integration
+**Status**: Preparado para construir la interfaz de revisión y la capa de feedback
+**Next Coding Session**: Implementar vista detalle de episodio y controles de revisión

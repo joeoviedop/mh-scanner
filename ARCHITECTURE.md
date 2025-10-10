@@ -4,6 +4,8 @@
 
 Podcast Therapy Scanner es una web app interna diseñada para el equipo de VoyBien que permite escanear canales y playlists de YouTube para detectar menciones sobre terapia y salud mental en videopodcasts en español.
 
+**Estado actual:** Fases 0-4 completadas (70% del MVP) → continuación con interfaz de revisión (Fase 5).
+
 ## Stack Tecnológico
 
 ### Frontend
@@ -98,31 +100,24 @@ mh-scanner/
 ├── lib/                          # Shared utilities & services
 │   ├── integrations/             # External API clients
 │   │   ├── youtube/
-│   │   │   ├── client.ts         # YouTube API client
-│   │   │   ├── episodes.ts       # Episode fetching logic
-│   │   │   └── captions.ts       # Captions fetching logic
+│   │   │   └── captions.ts       # Descarga/parsing de subtítulos YouTube
 │   │   ├── llm/
-│   │   │   ├── client.ts         # OpenAI client
-│   │   │   ├── classifier.ts     # Classification logic
-│   │   │   └── prompts.ts        # LLM prompts
+│   │   │   └── openai.ts         # Cliente GPT-4 mini + prompt
 │   │   ├── google-sheets/
 │   │   │   ├── client.ts         # Google Sheets client
 │   │   │   └── exporter.ts       # Export logic
 │   │   └── apify/
 │   │       └── adapter.ts        # Apify adapter (preparado, no activo)
 │   ├── processing/               # Core processing logic
-│   │   ├── keyword-filter.ts     # Filtro de keywords inicial
-│   │   ├── context-extractor.ts  # Extracción de ventanas de contexto (±45s)
-│   │   ├── mention-detector.ts   # Detector de menciones
-│   │   └── reranker.ts           # Re-ranking basado en feedback
+│   │   └── keyword-filter.ts     # Filtro de keywords + ventana ±45s
 │   ├── utils/                    # Utility functions
 │   │   ├── date-helpers.ts
 │   │   ├── url-parser.ts         # Parser de URLs de YouTube
 │   │   ├── timestamp-helpers.ts  # Manejo de timestamps
 │   │   └── validators.ts
 │   ├── constants/                # Constants & config
-│   │   ├── keywords.ts           # Keywords de terapia/salud mental
-│   │   ├── classifications.ts    # Tipos de clasificación
+│   │   ├── therapy-keywords.ts   # Keywords de terapia/salud mental
+│   │   ├── classifications.ts    # Tipos de clasificación (plan)
 │   │   └── config.ts             # App config
 │   └── types/                    # TypeScript types
 │       ├── youtube.ts
@@ -172,7 +167,7 @@ Usuario → ScanInputForm → API Route (/api/youtube/fetch-episodes)
 
 ### 2. Transcription Fetching
 ```
-EpisodeList → API Route (/api/youtube/fetch-captions)
+EpisodeList → API Route (/api/youtube/fetch-captions) → Convex action (`transcriptionActions.fetchCaptionsForEpisode`)
          ↓
     YouTube Captions API
          ↓
@@ -181,11 +176,11 @@ EpisodeList → API Route (/api/youtube/fetch-captions)
 
 ### 3. Mention Detection
 ```
-Transcription → Keyword Filter → Context Extractor
+Transcription → Keyword Filter (`lib/processing/keyword-filter.ts`)
          ↓
-    API Route (/api/process/detect-mentions)
+    API Route (/api/process/detect-mentions) → Convex action (`mentionActions.detectMentionsForEpisode`)
          ↓
-    LLM Classifier (GPT-4 mini)
+    LLM Classifier (GPT-4 mini vía `lib/integrations/llm/openai.ts`)
          ↓
     Convex (fragments) con metadata:
     - tema (testimonio, recomendación, reflexión, dato)
