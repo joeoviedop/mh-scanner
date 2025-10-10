@@ -38,10 +38,11 @@ Este documento describe las reglas de trabajo, configuraciones y convenciones pa
 ```
 
 ### Integraciones
-- **YouTube Data API v3**: Listar videos
-- **OpenAI API**: GPT-4 mini para clasificación
-- **Google Sheets API**: Exportación de resultados
-- **Apify**: Preparado para fase 2 (no MVP)
+- **Authentication**: Passcode-based internal authentication
+- **YouTube Data API v3**: Listar videos (Fase 2+)
+- **OpenAI API**: GPT-4 mini para clasificación (Fase 4+)
+- **Google Sheets API**: Exportación de resultados (Fase 7+)
+- **Convex**: Database backend (Fase 2+)
 
 ---
 

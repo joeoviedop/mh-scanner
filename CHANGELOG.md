@@ -4,10 +4,43 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-01-10 - **Fase 1 Complete** ✅
+
+### 🎆 **MILESTONE: Authentication System Implemented**
+**Progress: 30% Complete** - Ready for YouTube scanning functionality
+
+### Added
+- **Complete Authentication System**:
+  - Passcode-based login with rate limiting (5 attempts/min)
+  - Session management with 24h JWT + secure httpOnly cookies
+  - Route protection middleware
+  - Login page with VoyBien branding
+  - Dashboard layout with logout functionality
+- **Security Features**:
+  - SHA-256 hashing with timing-safe comparisons
+  - HTTPS-only cookies in production
+  - SameSite strict cookie policy
+  - Rate limiting protection against brute force
+- **UI Components**:
+  - Professional login page with error handling
+  - Protected dashboard layout
+  - Logout button with loading states
+  - Responsive design with Tailwind CSS
+
+### Technical Implementation
+- **Authentication Library**: Custom JWT implementation in `/lib/auth.ts`
+- **API Routes**: `/api/auth/verify-passcode` and `/api/auth/logout`
+- **Middleware**: Route protection in `/middleware.ts`
+- **Pages**: Login form in `/app/(auth)/login/` and dashboard in `/app/(dashboard)/`
+
+### Changed
+- Updated project progress to 30% complete
+- Root page now redirects to dashboard (or login if unauthenticated)
+
 ## [0.1.1] - 2025-01-07 - **Fase 0 VALIDATED** ✅
 
 ### 🎆 **MILESTONE: Foundation Validated & Production Ready**
-**Progress: 20% Complete** - All validations passing, ready for Fase 1
+**Progress: 20% Complete** - All validations passing, ready for authentication
 
 ### Added
 - **Complete Validation Suite**:
