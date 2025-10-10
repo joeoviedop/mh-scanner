@@ -180,9 +180,23 @@ function parseSrv3(raw: string): CaptionSegment[] {
   return segments;
 }
 
+const TIMING_LINE_REGEX =
+  /^(\d{1,2}:)?\d{2}:\d{2}[\.,]\d{3}\s+-->\s+(\d{1,2}:)?\d{2}:\d{2}[\.,]\d{3}(?:\s+.*)?$/;
+
+function parseVttTimestamp(value: string): number {
+  const sanitized = value.replace(",", ".");
+  const parts = sanitized.split(":");
+
+  const seconds = parseFloat(parts.pop() ?? "0");
+  const minutes = parts.length > 0 ? Number(parts.pop()) : 0;
+  const hours = parts.length > 0 ? Number(parts.pop()) : 0;
+
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
 function parseVtt(vtt: string): CaptionSegment[] {
   const lines = vtt
-    .replace(/^WEBVTT[^\n]*\n+/i, "")
+    .replace(/^\uFEFF?WEBVTT[^\n]*\n+/i, "")
     .split(/\r?\n/)
     .map((line) => line.trimEnd());
 
@@ -190,37 +204,56 @@ function parseVtt(vtt: string): CaptionSegment[] {
   let i = 0;
 
   while (i < lines.length) {
-    if (!lines[i]) {
+    let line = lines[i]?.trim();
+
+    if (!line || line.startsWith("NOTE") || line.startsWith("STYLE") || line.startsWith("REGION")) {
       i += 1;
       continue;
     }
 
-    if (/^\d+$/.test(lines[i])) {
+    if (/^\d+$/.test(line)) {
+      i += 1;
+      line = lines[i]?.trim() ?? "";
+    }
+
+    if (!TIMING_LINE_REGEX.test(line)) {
       i += 1;
       continue;
     }
 
-    const timingMatch = lines[i].match(
-      /^(\d{2}:\d{2}:\d{2}\.\d{3}|\d{2}:\d{2}\.\d{3})\s+-->\s+(\d{2}:\d{2}:\d{2}\.\d{3}|\d{2}:\d{2}\.\d{3})/,
-    );
-
-    if (!timingMatch) {
+    const parts = line.split(/\s+-->/);
+    if (parts.length !== 2) {
       i += 1;
       continue;
     }
 
-    const start = parseTimestamp(timingMatch[1].replace(",", "."));
-    const end = parseTimestamp(timingMatch[2].replace(",", "."));
+    const startMatch = parts[0].trim();
+    const endMatch = parts[1].trim().split(/\s+/)[0];
+
+    const start = parseVttTimestamp(startMatch);
+    const end = parseVttTimestamp(endMatch);
 
     i += 1;
-    let text = "";
+    const textLines: string[] = [];
 
-    while (i < lines.length && lines[i]) {
-      text += `${lines[i]} `;
+    while (i < lines.length) {
+      const cueLine = lines[i];
+      if (!cueLine) {
+        break;
+      }
+      if (cueLine.startsWith("NOTE")) {
+        break;
+      }
+      textLines.push(cueLine);
       i += 1;
     }
 
-    const cleaned = text.replace(/\s+/g, " ").trim();
+    const cleaned = textLines
+      .join(" ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
     if (cleaned) {
       segments.push({
         start,
