@@ -329,4 +329,24 @@ export default defineSchema({
     .index("by_scheduled_at", ["scheduledAt"])
     .index("by_priority", ["priority"])
     .index("by_created_by", ["createdBy"]),
+
+  // Keyword Configuration for LLM detection
+  keywordConfig: defineTable({
+    // Keyword data
+    keyword: v.string(), // The actual keyword or phrase
+    category: v.string(), // Category (therapy_core, mental_health, treatment, etc.)
+    priority: v.union(v.literal("high"), v.literal("medium"), v.literal("low")),
+    description: v.string(), // Optional description of when to use this keyword
+    
+    // Status
+    isActive: v.boolean(), // Whether this keyword is currently being used
+    
+    // Metadata
+    lastModified: v.number(), // When this keyword was last updated
+  })
+    .index("by_keyword", ["keyword"])
+    .index("by_category", ["category"])
+    .index("by_active", ["isActive"])
+    .index("by_priority", ["priority"])
+    .index("by_last_modified", ["lastModified"]),
 });

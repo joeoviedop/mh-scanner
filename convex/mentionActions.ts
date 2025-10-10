@@ -4,7 +4,6 @@ import { action } from "./_generated/server";
 import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { detectKeywordMatches } from "../lib/processing/keyword-filter";
-import { THERAPY_KEYWORDS } from "../lib/constants/therapy-keywords";
 import { getOpenAIClient } from "../lib/integrations/llm/openai";
 
 type FragmentInput = {
@@ -117,7 +116,14 @@ export const detectMentionsForEpisode = action({
     });
 
     try {
-      const matches = detectKeywordMatches(transcription.segments, THERAPY_KEYWORDS, {
+      // Get active keywords from configuration
+      const activeKeywords = await ctx.runQuery(api.keywordConfig.getActiveKeywords);
+      
+      if (activeKeywords.length === 0) {
+        throw new Error("No active keywords configured for detection");
+      }
+
+      const matches = detectKeywordMatches(transcription.segments, activeKeywords, {
         windowSeconds: 45,
         maxMatches: 30,
       });

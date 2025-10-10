@@ -17,6 +17,7 @@ import type * as channelActions from "../channelActions.js";
 import type * as channels from "../channels.js";
 import type * as episodes from "../episodes.js";
 import type * as fragments from "../fragments.js";
+import type * as keywordConfig from "../keywordConfig.js";
 import type * as mentionActions from "../mentionActions.js";
 import type * as scanJobs from "../scanJobs.js";
 import type * as transcriptionActions from "../transcriptionActions.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   channels: typeof channels;
   episodes: typeof episodes;
   fragments: typeof fragments;
+  keywordConfig: typeof keywordConfig;
   mentionActions: typeof mentionActions;
   scanJobs: typeof scanJobs;
   transcriptionActions: typeof transcriptionActions;
