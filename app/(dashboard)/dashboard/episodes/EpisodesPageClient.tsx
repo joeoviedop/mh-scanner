@@ -3,7 +3,7 @@
 import React from "react";
 
 import { EpisodeList } from "@/src/components/episodes/EpisodeList";
-import { TranscriptViewer } from "@/src/components/episodes/TranscriptViewer";
+
 
 type Episode = {
   _id: string;
@@ -60,7 +60,7 @@ export default function EpisodesPageClient({ initialEpisodes }: Props) {
   const [selectedEpisodeId, setSelectedEpisodeId] = React.useState<string | null>(null);
   const [fragments, setFragments] = React.useState<Fragment[]>([]);
   const [fragmentsLoading, setFragmentsLoading] = React.useState(false);
-  const [viewingTranscriptId, setViewingTranscriptId] = React.useState<string | null>(null);
+
 
   const selectedEpisode = React.useMemo(() => {
     if (!selectedEpisodeId) return null;
@@ -248,7 +248,7 @@ export default function EpisodesPageClient({ initialEpisodes }: Props) {
         fetchingTranscriptionIds={fetchingIds}
         onDetectMentions={handleDetectMentions}
         detectingMentionIds={detectingIds}
-        onViewTranscript={(episode) => setViewingTranscriptId(episode._id)}
+
         showChannel
       />
 
@@ -314,13 +314,7 @@ export default function EpisodesPageClient({ initialEpisodes }: Props) {
         </div>
       )}
       
-      {/* Transcript Viewer Modal */}
-      {viewingTranscriptId && (
-        <TranscriptViewer
-          episodeId={viewingTranscriptId}
-          onClose={() => setViewingTranscriptId(null)}
-        />
-      )}
+
     </div>
   );
 }
