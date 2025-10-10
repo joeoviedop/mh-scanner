@@ -100,11 +100,12 @@ export function parseYouTubeUrl(url: string): ParsedYouTubeUrlType | null {
     // 3. Handle format (@username)
     const channelHandleMatch = cleanUrl.match(YOUTUBE_PATTERNS.channelHandle);
     if (channelHandleMatch) {
+      const handle = `@${channelHandleMatch[1]}`;
       return {
         type: "channel",
-        id: channelHandleMatch[1],
+        id: handle,
         originalUrl: cleanUrl,
-        displayName: `@${channelHandleMatch[1]}`,
+        displayName: handle,
       };
     }
 
