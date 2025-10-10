@@ -154,6 +154,11 @@ function normalizeSegments(items: unknown[]): ApifyTranscript["segments"] {
       return;
     }
 
+    if (Array.isArray(record.data)) {
+      record.data.forEach((raw) => addSegment(raw as RawTranscriptSegment));
+      return;
+    }
+
     if (
       record.text !== undefined &&
       (record.start !== undefined || record.startTime !== undefined || record.startTimeMs !== undefined)
