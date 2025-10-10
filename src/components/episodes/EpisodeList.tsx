@@ -38,6 +38,7 @@ interface EpisodeListProps {
   fetchingTranscriptionIds?: string[];
   onDetectMentions?: (episode: Episode) => void;
   detectingMentionIds?: string[];
+  onViewTranscript?: (episode: Episode) => void;
   className?: string;
 }
 
@@ -111,6 +112,7 @@ export function EpisodeList({
   fetchingTranscriptionIds = [],
   onDetectMentions,
   detectingMentionIds = [],
+  onViewTranscript,
   className = "",
 }: EpisodeListProps) {
   if (error) {
@@ -322,6 +324,20 @@ export function EpisodeList({
                         }}
                       >
                         🔄 Retry transcription
+                      </button>
+                    </>
+                  )}
+                  {onViewTranscript && episode.hasTranscription && (
+                    <>
+                      <span className="text-xs text-gray-400">•</span>
+                      <button
+                        className="text-xs text-blue-600 hover:text-blue-800"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onViewTranscript(episode);
+                        }}
+                      >
+                        📄 View transcript
                       </button>
                     </>
                   )}
