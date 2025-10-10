@@ -23,10 +23,9 @@ Podcast Therapy Scanner es una web app interna diseñada para el equipo de VoyBi
 
 ### Integraciones Externas
 - **YouTube Data API v3**: Listar episodios
-- **YouTube Captions API**: Obtener transcripciones
+- **Apify**: Actor `pintostudio/youtube-transcript-scraper` para transcripciones
 - **LLM**: GPT-4 mini (OpenAI API)
 - **Google Sheets API**: Exportación de resultados
-- **Apify**: Preparado pero no activo en MVP
 
 ### Hosting & Deploy
 - **Hosting**: Vercel
@@ -103,8 +102,7 @@ mh-scanner/
 ├── lib/                          # Shared utilities & services
 │   ├── integrations/             # External API clients
 │   │   ├── youtube/
-│   │   │   ├── captions.ts       # Descarga/parsing de subtítulos YouTube (watch page + timedtext)
-│   │   │   ├── watchPage.ts      # Utilidad para leer ytInitialPlayerResponse
+│   │   │   ├── captions.ts       # Transcripción vía Apify (fuente única)
 │   │   │   └── oauth.ts          # Renovación de tokens OAuth YouTube (opcional)
 │   │   ├── llm/
 │   │   │   └── openai.ts         # Cliente GPT-4 mini + prompt
@@ -112,7 +110,7 @@ mh-scanner/
 │   │   │   ├── client.ts         # Google Sheets client
 │   │   │   └── exporter.ts       # Export logic
 │   │   └── apify/
-│   │       └── adapter.ts        # Apify adapter (preparado, no activo)
+│   │       └── transcript.ts     # Cliente del actor de transcripción
 │   ├── processing/               # Core processing logic
 │   │   └── keyword-filter.ts     # Filtro de keywords + ventana ±45s
 │   ├── utils/                    # Utility functions
@@ -174,7 +172,7 @@ Usuario → ScanInputForm → API Route (/api/youtube/scan)
 ```
 EpisodeList → API Route (/api/youtube/fetch-captions) → Convex action (`transcriptionActions.fetchCaptionsForEpisode`)
          ↓
-    YouTube Captions API
+    Apify (YouTube Transcript Scraper)
          ↓
     Convex (transcriptions)
 ```
@@ -340,9 +338,8 @@ ExportButtons → API Route (/api/export/csv o /google-sheets)
 ## Principios de Arquitectura
 
 ### 1. Modularidad
-- Cada integración externa (YouTube, LLM, Google Sheets) debe ser reemplazable
+- Cada integración externa (YouTube, Apify, LLM, Google Sheets) debe ser reemplazable
 - Los servicios están desacoplados mediante interfaces claras
-- El adaptador de Apify está listo pero inactivo en MVP
 
 ### 2. Bajo Costo
 - Solo procesar episodios con subtítulos disponibles

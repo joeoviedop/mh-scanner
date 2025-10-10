@@ -5,16 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- Fallback público mediante `lib/integrations/youtube/watchPage.ts` para obtener subtítulos desde `ytInitialPlayerResponse`
-- Conversión automática de pistas `srv3` a segmentos (misma estructura TTML)
-- Soporte para subtítulos WebVTT y traducciones automáticas (`tlang`) desde timedtext
-- Registro enriquecido de depuración cuando no se encuentran subtítulos públicos
-- Integración opcional con Apify (`lib/integrations/apify/transcript.ts`) para obtener transcripciones cuando YouTube no expone subtítulos públicos
+- Integración con Apify (`lib/integrations/apify/transcript.ts`) como fuente principal de transcripciones
 
 ### Changed
-- El flujo de transcripción ya no requiere OAuth; `lib/integrations/youtube/captions.ts` prioriza subtítulos públicos (watch page + timedtext)
-- `convex/transcriptionActions.fetchCaptionsForEpisode` depende exclusivamente del nuevo mecanismo público
-- `channelActions.scanSource` omite Shorts (videos < 2 minutos) y reporta episodios descartados en el resumen
+- `lib/integrations/youtube/captions.ts` ahora depende únicamente de Apify (se eliminaron los intentos con watch page/timedtext)
+- `convex/transcriptionActions.fetchCaptionsForEpisode` registra errores específicos de Apify y marca el episodio en estado `error`
+- `channelActions.scanSource` mantiene la omisión de Shorts (< 2 minutos) y reportes en el resumen
 
 ## [0.5.1] - 2025-01-10 - **Dashboard Scanning UI**
 

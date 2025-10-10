@@ -45,7 +45,7 @@ Este documento describe las reglas de trabajo, configuraciones y convenciones pa
 ### Integraciones
 - **Authentication**: Passcode-based internal authentication (Fase 1+)
 - **YouTube Data API v3**: Descubrimiento de canales y episodios (Fase 2+)
-- **YouTube Captions API**: Descarga de transcripciones priorizando español (Fase 3+)
+- **Apify**: Actor `pintostudio/youtube-transcript-scraper` para obtener transcripciones (Fase 3+)
 - **OpenAI API**: GPT-4 mini para clasificación de fragmentos (Fase 4+)
 - **Convex**: Database + jobs + acciones de orquestación (Fase 2+)
 - **Google Sheets API**: Exportación de resultados (Fase 7+)
@@ -230,9 +230,12 @@ export default config
 5. El backend omite Shorts (< 2 minutos) para centrarse en episodios largos.
 6. Visita **Episodios** para revisar el contenido importado, solicitar transcripciones y lanzar la detección de menciones.
 
-### (Opcional) Credenciales externas
-- **OAuth YouTube:** Solo necesaria si requieres subtítulos privados. Sigue los pasos anteriores (`GOOGLE_CLIENT_ID/SECRET/REFRESH_TOKEN`).
-- **Apify:** Configura `APIFY_TOKEN` (y opcionalmente `APIFY_ACTOR_ID`) si quieres que el backend use el actor público `pintostudio/youtube-transcript-scraper` como último recurso. Usa `npx convex env set APIFY_TOKEN <token>` y reinicia `npx convex dev`.
+### Credenciales externas
+- **Obligatorias:**
+  - `YOUTUBE_API_KEY` para el escaneo de episodios.
+  - `APIFY_TOKEN` (y opcionalmente `APIFY_ACTOR_ID`) para generar transcripciones.
+- **Opcional (OAuth YouTube):** Sólo necesaria si en el futuro accedemos a subtítulos privados (`GOOGLE_CLIENT_ID/SECRET/REFRESH_TOKEN`).
+- Configura cada variable con `npx convex env set <CLAVE> <valor>` y reinicia `npx convex dev`.
 
 ---
 
