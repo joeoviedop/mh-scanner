@@ -79,19 +79,45 @@ export const fetchCaptionsForEpisode = action({
     });
 
     try {
+      console.log("[transcriptionActions] Fetching captions for episode:", {
+        episodeId,
+        videoId: episode.videoId,
+        title: episode.title,
+      });
+      
       const { result, debug } = await fetchCaptions(episode.videoId);
 
       if (!result || result.segments.length === 0) {
         const apifyInfo = debug.apify;
         const message = apifyInfo.runId
-          ? `Apify no devolvió transcripción (runId: ${apifyInfo.runId}, items: ${apifyInfo.itemCount}).`
-          : "No se pudo obtener transcripción desde Apify.";
+          ? `Apify no devolvió transcripción (runId: ${apifyInfo.runId}, items: ${apifyInfo.itemCount}, raw: ${apifyInfo.rawItemCount ?? 0}). Verifica que el video tenga subtítulos disponibles.`
+          : "No se pudo obtener transcripción desde Apify. Verifica la configuración del API token.";
+
+        console.error("[transcriptionActions] Apify returned empty result", {
+          episodeId,
+          videoId: episode.videoId,
+          message,
+          apify: apifyInfo,
+          debugInfo: {
+            hasRunId: !!apifyInfo.runId,
+            hasDatasetId: !!apifyInfo.datasetId,
+            itemCount: apifyInfo.itemCount,
+            rawItemCount: apifyInfo.rawItemCount,
+            runStatus: apifyInfo.runStatus,
+            rawSampleCount: apifyInfo.rawSample?.length ?? 0,
+            rawSamplePreview: apifyInfo.rawSample?.slice(0, 2)
+          }
+        });
+
         await ctx.runMutation(api.scanJobs.updateStatus, {
           jobId,
           status: "failed",
           errorMessage: message,
           results: {
-            debug,
+            debug: {
+              ...debug,
+              sample: apifyInfo.rawSample?.slice(0, 3),
+            },
           },
         });
 
@@ -161,6 +187,14 @@ export const fetchCaptionsForEpisode = action({
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to fetch captions";
+      
+      console.error("[transcriptionActions] Error fetching captions:", {
+        episodeId,
+        videoId: episode.videoId,
+        error: message,
+        errorType: error?.constructor?.name,
+        stack: error instanceof Error ? error.stack : undefined
+      });
 
       await ctx.runMutation(api.scanJobs.updateStatus, {
         jobId,

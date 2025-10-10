@@ -417,7 +417,10 @@ export function getYouTubeClient(): YouTubeAPIClient {
 /**
  * Helper function to parse ISO 8601 duration to seconds
  */
-export function parseDuration(isoDuration: string): number {
+export function parseDuration(isoDuration: string | null | undefined): number {
+  // Handle null/undefined inputs
+  if (!isoDuration || typeof isoDuration !== "string") return 0;
+  
   const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
   if (!match) return 0;
 

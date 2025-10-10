@@ -73,8 +73,9 @@ export const THERAPY_KEYWORDS = [
   "red de apoyo",
 ];
 
-export function matchTherapyKeywords(text: string): string[] {
-  if (!text) return [];
+export function matchTherapyKeywords(text: string | null | undefined): string[] {
+  // Ensure text is a valid string
+  if (!text || typeof text !== "string") return [];
 
   const normalized = text
     .toLowerCase()

@@ -23,6 +23,9 @@ export type CaptionFetchDebug = {
     datasetId?: string;
     itemCount: number;
     actorId: string;
+    runStatus?: string;
+    rawItemCount?: number;
+    rawSample?: unknown[];
   };
 };
 
@@ -84,6 +87,10 @@ export async function fetchCaptions(videoId: string): Promise<CaptionFetchOutcom
 
     if (!apifyResult.debug.actorId) {
       debug.apify.actorId = defaultDebug.apify.actorId;
+    }
+
+    if (apifyResult.segments.length === 0) {
+      return { result: null, debug };
     }
 
     return {

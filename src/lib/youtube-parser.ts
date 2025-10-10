@@ -42,9 +42,14 @@ export type ParsedYouTubeUrlType = z.infer<typeof ParsedYouTubeUrl>;
 /**
  * Parses a YouTube URL and extracts relevant information
  */
-export function parseYouTubeUrl(url: string): ParsedYouTubeUrlType | null {
+export function parseYouTubeUrl(url: string | null | undefined): ParsedYouTubeUrlType | null {
   try {
+    // Handle null/undefined inputs
+    if (!url || typeof url !== "string") return null;
+    
     const trimmed = url.trim();
+    if (!trimmed) return null;
+    
     const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 
     const validatedUrl = YouTubeUrlSchema.parse({ url: withProtocol });
@@ -119,7 +124,7 @@ export function parseYouTubeUrl(url: string): ParsedYouTubeUrlType | null {
 /**
  * Validates if a string is a valid YouTube URL
  */
-export function isValidYouTubeUrl(url: string): boolean {
+export function isValidYouTubeUrl(url: string | null | undefined): boolean {
   const parsed = parseYouTubeUrl(url);
   return parsed !== null;
 }
@@ -127,7 +132,7 @@ export function isValidYouTubeUrl(url: string): boolean {
 /**
  * Extracts just the ID from a YouTube URL
  */
-export function extractYouTubeId(url: string): string | null {
+export function extractYouTubeId(url: string | null | undefined): string | null {
   const parsed = parseYouTubeUrl(url);
   return parsed?.id ?? null;
 }
@@ -135,7 +140,7 @@ export function extractYouTubeId(url: string): string | null {
 /**
  * Gets the YouTube URL type (channel, playlist, video)
  */
-export function getYouTubeUrlType(url: string): YouTubeUrlType | null {
+export function getYouTubeUrlType(url: string | null | undefined): YouTubeUrlType | null {
   const parsed = parseYouTubeUrl(url);
   return parsed?.type ?? null;
 }
@@ -143,7 +148,7 @@ export function getYouTubeUrlType(url: string): YouTubeUrlType | null {
 /**
  * Normalizes a YouTube URL to a standard format
  */
-export function normalizeYouTubeUrl(url: string): string | null {
+export function normalizeYouTubeUrl(url: string | null | undefined): string | null {
   const parsed = parseYouTubeUrl(url);
   if (!parsed) return null;
 
