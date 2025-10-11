@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import ProcessingStatus from "../../../../../src/components/episodes/ProcessingStatus";
-import MentionResults from "../../../../../src/components/episodes/MentionResults";
-import type { Id } from "../../../../../convex/_generated/dataModel";
+import ProcessingStatus from "@/src/components/episodes/ProcessingStatus";
+import MentionResults from "@/src/components/episodes/MentionResults";
+import type { Id } from "@/convex/_generated/dataModel";
 
 interface TranscriptSegment {
   start: number;

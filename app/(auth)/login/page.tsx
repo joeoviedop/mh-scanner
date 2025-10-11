@@ -8,16 +8,19 @@ const FEATURES = [
     title: "Escaneo enfocado",
     description:
       "Analiza canales y playlists para detectar menciones reales sobre terapia y salud mental.",
+    icon: "🎯",
   },
   {
     title: "Contexto accionable",
     description:
       "Extrae momentos clave, tono y sensibilidad para que el equipo avance sin ver video completo.",
+    icon: "🔍",
   },
   {
     title: "Exportación simple",
     description:
       "Descarga resultados a CSV o Google Sheets para compartir hallazgos y coordinar contenidos.",
+    icon: "📊",
   },
 ];
 
@@ -63,60 +66,116 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 py-12 text-white">
-      <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-white/5 p-8 shadow-xl backdrop-blur">
-        <header className="mb-8 space-y-2">
-          <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">
-            VoyBien · Internal Tool
-          </p>
-          <h1 className="text-3xl font-semibold">Podcast Therapy Scanner</h1>
-          <p className="text-sm text-slate-200">
-            Accede con el passcode interno para analizar conversaciones sobre terapia, priorizar
-            contenidos y coordinar respuestas con el equipo.
-          </p>
-        </header>
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden" style={{background: 'linear-gradient(135deg, #06204E 0%, #FF40CE 100%)'}}>
+      {/* Background decoration */}
+      <div className="absolute inset-0 opacity-30">
+        <div 
+          className="w-full h-full"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='7' cy='7' r='7'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundRepeat: "repeat"
+          }}
+        />
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-slate-100">Passcode compartido</span>
-            <input
-              type="password"
-              value={passcode}
-              onChange={(event) => setPasscode(event.target.value)}
-              autoComplete="current-password"
-              placeholder="••••••••"
-              className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-base text-white outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-400/60"
-            />
-          </label>
+      <div className="relative z-10">
+        {/* Main login card */}
+        <div className="w-full max-w-md">
+          {/* Logo/Splash */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 glass rounded-2xl mb-4 shadow-lg">
+              <span className="text-3xl font-bold text-white">V</span>
+            </div>
+            <p className="text-xs font-medium uppercase tracking-widest mb-2" style={{color: '#95E0FF'}}>
+              VoyBien · Internal Tool
+            </p>
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Podcast Therapy Scanner
+            </h1>
+            <p className="text-sm max-w-sm opacity-90">
+              Accede con el passcode interno para analizar conversaciones sobre terapia, priorizar
+              contenidos y coordinar respuestas con el equipo.
+            </p>
+          </div>
 
-          {error ? <p className="text-sm text-red-300">{error}</p> : null}
+          {/* Login form */}
+          <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-200">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label htmlFor="passcode" className="block text-sm font-medium text-gray-900 mb-2">
+                  Passcode compartido
+                </label>
+                <input
+                  id="passcode"
+                  type="password"
+                  value={passcode}
+                  onChange={(event) => setPasscode(event.target.value)}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  className="input"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: '#111827',
+                  }}
+                />
+              </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isSubmitting ? "Validando passcode..." : "Ingresar al dashboard"}
-          </button>
-        </form>
+              {error && (
+                <div className="alert-error">
+                  <p className="text-sm">{error}</p>
+                </div>
+              )}
 
-        <section className="mt-8 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-sm font-semibold tracking-wide text-emerald-200">
-            Lo que podrás hacer adentro
-          </h2>
-          <ul className="space-y-3 text-sm text-slate-100/90">
-            {FEATURES.map((feature) => (
-              <li key={feature.title} className="rounded-xl border border-white/5 bg-black/10 p-3">
-                <p className="font-medium text-white">{feature.title}</p>
-                <p>{feature.description}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="btn micro-bounce w-full font-bold py-3"
+                style={{
+                  background: 'linear-gradient(to right, #FF40CE, #0065FF)',
+                  color: 'white'
+                }}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="spinner"></div>
+                    Validando passcode...
+                  </div>
+                ) : (
+                  "Ingresar al dashboard"
+                )}
+              </button>
+            </form>
+          </div>
 
-        <p className="mt-6 text-center text-xs text-slate-400">
-          ¿Dudas? Escríbele a Operaciones VoyBien para recuperar el passcode.
-        </p>
+          {/* Features section */}
+          <div className="mt-8 bg-white rounded-2xl p-6 border border-gray-200">
+            <h2 className="text-sm font-semibold mb-4 uppercase tracking-wider">
+              Lo que podrás hacer adentro
+            </h2>
+            <ul className="space-y-4">
+              {FEATURES.map((feature) => (
+                <li key={feature.title} className="flex gap-3 text-sm">
+                  <span className="text-xl">{feature.icon}</span>
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">{feature.title}</p>
+                    <p className="text-xs leading-relaxed opacity-80">
+                      {feature.description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Help text */}
+          <div className="mt-6 text-center">
+            <p className="text-xs opacity-60">
+              ¿Dudas? Escríbele a Operaciones VoyBien para recuperar el passcode.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -49,6 +49,7 @@ export function ScanInputForm({
     watch,
     formState: { errors, isValid },
     reset,
+    setValue,
   } = useForm<ScanFormData>({
     resolver: zodResolver(ScanFormSchema),
     defaultValues: {
@@ -57,6 +58,7 @@ export function ScanInputForm({
   });
 
   const watchedUrl = watch("youtubeUrl");
+  const watchedScanFrequency = watch("scanFrequency");
 
   // Update preview when URL changes
   React.useEffect(() => {
@@ -90,157 +92,200 @@ export function ScanInputForm({
   };
 
   return (
-    <div className={`max-w-2xl mx-auto ${className}`}>
-      <div className="bg-white shadow-sm rounded-lg border p-6">
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Add YouTube Source
-          </h2>
-          <p className="text-sm text-gray-600">
-            Enter a YouTube channel, playlist, or video URL to start scanning
-            for therapy and mental health mentions.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-          {/* YouTube URL Input */}
-          <div>
-            <label
-              htmlFor="youtubeUrl"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              YouTube URL
-            </label>
+    <div className={`space-y-6 ${className}`}>
+      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+        {/* YouTube URL Input */}
+        <div>
+          <label
+            htmlFor="youtubeUrl"
+            className="block text-sm font-semibold text-gray-900 mb-3"
+          >
+            URL de YouTube
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <span className="text-gray-400 text-lg">🎥</span>
+            </div>
             <input
               {...register("youtubeUrl")}
               type="url"
               id="youtubeUrl"
-              placeholder="https://www.youtube.com/channel/UC... or https://www.youtube.com/@username"
-              className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                errors.youtubeUrl ? "border-red-300" : ""
-              }`}
+              placeholder="https://www.youtube.com/@username"
+              className={`input pl-12 pr-4 py-3 text-base ${
+                errors.youtubeUrl ? "input-error" : ""
+              } ${isLoading ? "opacity-50" : ""}`}
               disabled={isLoading}
             />
-            {errors.youtubeUrl && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.youtubeUrl.message}
-              </p>
-            )}
-            
-            {/* URL Preview */}
-            {urlPreview && (
-              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                <div className="flex items-center gap-2">
-                  <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    urlType === "channel"
-                      ? "bg-green-100 text-green-800"
-                      : urlType === "playlist"
-                      ? "bg-blue-100 text-blue-800"
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}>
-                    {urlType === "channel" && "📺 Channel"}
-                    {urlType === "playlist" && "📂 Playlist"}
-                    {urlType === "video" && "🎥 Video"}
-                  </div>
-                  <span className="text-sm text-gray-600">
-                    Detected {urlType}
-                  </span>
+          </div>
+          {errors.youtubeUrl && (
+            <p className="mt-2 text-sm text-error-600">
+              {errors.youtubeUrl.message}
+            </p>
+          )}
+          
+          {/* URL Preview */}
+          {urlPreview && (
+            <div className="mt-4 p-4 bg-gradient-to-r from-brand-light/20 to-brand-blue/20 border border-brand-light/30 rounded-xl">
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
+                  urlType === "channel"
+                    ? "bg-success-100 text-success-800 border border-success-200"
+                    : urlType === "playlist"
+                    ? "bg-info-100 text-info-800 border border-info-200"
+                    : "bg-warning-100 text-warning-800 border border-warning-200"
+                }`}>
+                  {urlType === "channel" && "📺 Canal"}
+                  {urlType === "playlist" && "📂 Playlist"}
+                  {urlType === "video" && "🎥 Video"}
                 </div>
-                <p className="mt-1 text-sm text-gray-700 font-mono break-all">
-                  {urlPreview}
-                </p>
+                <span className="text-sm font-medium text-gray-700">
+                  {urlType === "channel" && "Canal detectado"}
+                  {urlType === "playlist" && "Playlist detectada"}
+                  {urlType === "video" && "Video detectado"}
+                </span>
+              </div>
+              <p className="text-xs text-gray-600 font-mono break-all">
+                {urlPreview}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Scan Frequency */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-3">
+            Frecuencia de escaneo
+          </label>
+          <div className="space-y-3">
+            {[
+              {
+                value: "daily",
+                title: "Diario",
+                description: "Verifica nuevos episodios todos los días",
+                icon: "📅",
+                recommended: false
+              },
+              {
+                value: "weekly", 
+                title: "Semanal",
+                description: "Verifica nuevos episodios semanalmente (recomendado)",
+                icon: "📊",
+                recommended: true
+              },
+              {
+                value: "manual",
+                title: "Manual",
+                description: "Solo escanea cuando se active manualmente",
+                icon: "👆",
+                recommended: false
+              }
+            ].map((option) => (
+              <label
+                key={option.value}
+                className="relative flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all hover-lift"
+                style={{
+                  borderColor: watchedScanFrequency === option.value ? 'var(--tw-ring-color)' : 'transparent',
+                  backgroundColor: watchedScanFrequency === option.value ? 'rgb(59 130 246 / 0.05)' : 'transparent'
+                }}
+                onClick={() => setValue("scanFrequency", option.value as any)}
+              >
+                <input
+                  {...register("scanFrequency")}
+                  type="radio"
+                  value={option.value}
+                  className="sr-only"
+                  disabled={isLoading}
+                  checked={watchedScanFrequency === option.value}
+                />
+                <div className="flex-shrink-0">
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                    watchedScanFrequency === option.value
+                      ? "bg-primary-500 border-primary-500"
+                      : "bg-white border-gray-300"
+                  }`}>
+                    {watchedScanFrequency === option.value && (
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">{option.icon}</span>
+                    <p className="font-medium text-gray-900">{option.title}</p>
+                    {option.recommended && (
+                      <span className="badge badge-success text-xs">
+                        Recomendado
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600">{option.description}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+          {errors.scanFrequency && (
+            <p className="mt-2 text-sm text-error-600">
+              {errors.scanFrequency.message}
+            </p>
+          )}
+        </div>
+
+        {/* Submit Button */}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={!isValid || isLoading}
+            className={`btn-primary text-base px-6 py-3 font-semibold shadow-lg micro-bounce ${
+              !isValid || isLoading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-3">
+                <div className="spinner w-4 h-4"></div>
+                <span>Agregando fuente...</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span>🔍</span>
+                <span>Agregar fuente</span>
               </div>
             )}
-          </div>
+          </button>
+        </div>
+      </form>
 
-          {/* Scan Frequency */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Scan Frequency
-            </label>
-            <div className="space-y-2">
-              <label className="flex items-center">
-                <input
-                  {...register("scanFrequency")}
-                  type="radio"
-                  value="daily"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                  disabled={isLoading}
-                />
-                <span className="ml-2 text-sm text-gray-700">
-                  <strong>Daily</strong> - Check for new episodes daily
-                </span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  {...register("scanFrequency")}
-                  type="radio"
-                  value="weekly"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                  disabled={isLoading}
-                />
-                <span className="ml-2 text-sm text-gray-700">
-                  <strong>Weekly</strong> - Check for new episodes weekly (recommended)
-                </span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  {...register("scanFrequency")}
-                  type="radio"
-                  value="manual"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                  disabled={isLoading}
-                />
-                <span className="ml-2 text-sm text-gray-700">
-                  <strong>Manual</strong> - Only scan when manually triggered
-                </span>
-              </label>
-            </div>
-            {errors.scanFrequency && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.scanFrequency.message}
+      {/* Example URLs */}
+      <div className="border-t border-gray-200 pt-6">
+        <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <span>💡</span>
+          <span>Ejemplos de URLs</span>
+        </h3>
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+            <span className="text-gray-400">📺</span>
+            <div>
+              <p className="text-xs font-medium text-gray-700">Canal</p>
+              <p className="text-xs text-gray-500 font-mono">
+                youtube.com/@username
               </p>
-            )}
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={!isValid || isLoading}
-              className={`px-6 py-2 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                isValid && !isLoading
-                  ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Adding Source...
-                </div>
-              ) : (
-                "Add Source"
-              )}
-            </button>
-          </div>
-        </form>
-
-        {/* Example URLs */}
-        <div className="mt-8 border-t pt-6">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">
-            Example URLs:
-          </h3>
-          <div className="space-y-2 text-xs text-gray-500">
-            <div>
-              <strong>Channel:</strong> https://www.youtube.com/@username or
-              https://www.youtube.com/channel/UC...
             </div>
+          </div>
+          <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+            <span className="text-gray-400">📂</span>
             <div>
-              <strong>Playlist:</strong> https://www.youtube.com/playlist?list=PL...
+              <p className="text-xs font-medium text-gray-700">Playlist</p>
+              <p className="text-xs text-gray-500 font-mono">
+                youtube.com/playlist?list=...
+              </p>
             </div>
+          </div>
+          <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+            <span className="text-gray-400">🎥</span>
             <div>
-              <strong>Video:</strong> https://www.youtube.com/watch?v=...
+              <p className="text-xs font-medium text-gray-700">Video</p>
+              <p className="text-xs text-gray-500 font-mono">
+                youtube.com/watch?v=...
+              </p>
             </div>
           </div>
         </div>
