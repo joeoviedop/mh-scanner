@@ -57,8 +57,7 @@ const fragmentInputValidator = v.object({
   positiveFeedback: v.number(),
   negativeFeedback: v.number(),
   averageRating: v.optional(v.number()),
-  rankScore: v.number(),
-  youtubeUrl: v.string(),
+  // Removed: rankScore and youtubeUrl (not in schema)
 });
 
 export const listByEpisode = query({

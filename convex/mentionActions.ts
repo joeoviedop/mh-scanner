@@ -29,8 +29,7 @@ type FragmentInput = {
   positiveFeedback: number;
   negativeFeedback: number;
   averageRating?: number;
-  rankScore: number;
-  youtubeUrl: string;
+  // Removed: rankScore and youtubeUrl (not in schema)
 };
 
 type DetectionSummary = {
@@ -242,8 +241,9 @@ export const detectMentionsForEpisode = action({
 
         const startTime = Math.max(0, Math.round(match.startTime));
         const endTime = Math.max(startTime, Math.round(match.endTime));
-        const youtubeUrl = `https://www.youtube.com/watch?v=${episode.videoId}&t=${startTime}s`;
-        const rankScore = Math.min(100, classification.confianza + match.matchedKeywords.length * 5);
+        // Note: These are calculated but not stored in DB (schema doesn't include them)
+        // const youtubeUrl = `https://www.youtube.com/watch?v=${episode.videoId}&t=${startTime}s`;
+        // const rankScore = Math.min(100, classification.confianza + match.matchedKeywords.length * 5);
 
         classifiedFragments.push({
           transcriptionId: transcription._id,
@@ -268,8 +268,7 @@ export const detectMentionsForEpisode = action({
           positiveFeedback: 0,
           negativeFeedback: 0,
           averageRating: undefined,
-          rankScore,
-          youtubeUrl,
+          // Note: rankScore and youtubeUrl are calculated but not stored
         });
 
         await ctx.runMutation(api.scanJobs.updateStatus, {
