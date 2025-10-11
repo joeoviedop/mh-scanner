@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -43,8 +43,8 @@ export default function ProcessingStatus({
   onCompletion 
 }: ProcessingStatusProps) {
   const [job, setJob] = useState<ProcessingJob | null>(null);
-  const [isPolling, setIsPolling] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const getConvexClient = () => {
     const url = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -63,44 +63,37 @@ export default function ProcessingStatus({
       const processingJob = jobs.find(j => j.type === "process_mentions");
       if (processingJob) {
         setJob(processingJob);
-        
-        // Stop polling if job is complete
-        if (processingJob.status === "completed" || processingJob.status === "failed") {
-          setIsPolling(false);
-        }
       }
     } catch (error) {
       console.error("Failed to fetch job status:", error);
-      setIsPolling(false);
+      // Clear interval on error
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     }
   }, [episodeId]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    
-    if (job?.status === "running" && !isPolling) {
-      setIsPolling(true);
-      interval = setInterval(fetchJobStatus, 1000); // Poll every 1 second for better responsiveness
-    } else if (job?.status === "pending" && !isPolling) {
-      // Also poll for pending jobs to catch when they start
-      setIsPolling(true);
-      interval = setInterval(fetchJobStatus, 1000);
-    }
-    
-    if (job?.status === "completed" || job?.status === "failed") {
-      setIsPolling(false);
-      if (interval) {
-        clearInterval(interval);
-      }
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
 
+    // Set up polling based on job status
+    if (job?.status === "running" || job?.status === "pending") {
+      intervalRef.current = setInterval(fetchJobStatus, 1000);
+    }
+
+    // Cleanup function
     return () => {
-      if (interval) {
-        clearInterval(interval);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
-      setIsPolling(false);
     };
-  }, [job?.status, isPolling, fetchJobStatus]);
+  }, [job?.status, fetchJobStatus]);
 
   useEffect(() => {
     if (job?.status === "completed" && onCompletion) {
@@ -139,8 +132,8 @@ export default function ProcessingStatus({
       }
 
       // Start polling immediately after starting
-      setIsPolling(true);
       await fetchJobStatus();
+      // The useEffect will handle setting up the interval
     } catch (error) {
       setJob(prev => prev ? {
         ...prev,
