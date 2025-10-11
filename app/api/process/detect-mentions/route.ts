@@ -39,15 +39,19 @@ export async function POST(request: Request) {
   }
 
   try {
+    console.log("🎯 Starting mention detection API call for episode:", episodeId);
+    
     const convex = getClient();
     const result = await convex.action(api.mentionActions.detectMentionsForEpisode, {
       episodeId: episodeId as Id<"episodes">,
       force,
     });
 
+    console.log("✅ Mention detection API result:", result);
     return NextResponse.json({ success: true, result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error";
+    console.error("❌ Mention detection API error:", message, error);
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

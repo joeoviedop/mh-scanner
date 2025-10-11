@@ -60,9 +60,22 @@ export default function ProcessingStatus({
         targetId: episodeId,
       });
 
+      console.log("📊 Jobs found:", jobs.length, jobs.map(j => ({ type: j.type, status: j.status })));
+
       const processingJob = jobs.find(j => j.type === "process_mentions");
       if (processingJob) {
+        console.log("✅ Processing job status:", processingJob.status, "Progress:", processingJob.progress);
         setJob(processingJob);
+        
+        // Stop polling if completed or failed
+        if (processingJob.status === "completed" || processingJob.status === "failed") {
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+        }
+      } else {
+        console.log("⚠️ No processing job found yet");
       }
     } catch (error) {
       console.error("Failed to fetch job status:", error);
@@ -117,6 +130,8 @@ export default function ProcessingStatus({
         currentStep: "initializing",
       });
 
+      console.log("🚀 Starting mention detection for episode:", episodeId);
+
       const response = await fetch("/api/process/detect-mentions", {
         method: "POST",
         headers: {
@@ -126,15 +141,21 @@ export default function ProcessingStatus({
       });
 
       const data = await response.json();
+      console.log("📡 API Response:", data);
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? "Failed to start processing");
       }
 
-      // Start polling immediately after starting
-      await fetchJobStatus();
-      // The useEffect will handle setting up the interval
+      // Wait a bit before first poll to allow job creation
+      setTimeout(() => {
+        fetchJobStatus();
+      }, 500);
+      
+      // Start continuous polling
+      intervalRef.current = setInterval(fetchJobStatus, 1000);
     } catch (error) {
+      console.error("❌ Failed to start processing:", error);
       setJob(prev => prev ? {
         ...prev,
         status: "failed",

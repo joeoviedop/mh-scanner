@@ -168,7 +168,9 @@ export const addKeyword = mutation({
       .first();
 
     if (existing) {
-      throw new Error("Keyword already exists");
+      // Return existing keyword ID instead of throwing error
+      console.log(`Keyword "${args.keyword}" already exists, returning existing ID`);
+      return existing._id;
     }
 
     const keywordId = await ctx.db.insert("keywordConfig", {
