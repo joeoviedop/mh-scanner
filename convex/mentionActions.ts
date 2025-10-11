@@ -71,10 +71,21 @@ export const detectMentionsForEpisode = action({
     }
 
     if (episode.status === "processing" && !force) {
-      return {
-        status: "skipped",
-        reason: "episode_processing",
-      } satisfies DetectionResult;
+      console.log("⚠️ Episode is marked as processing, checking if stuck...");
+      
+      // Check if episode has been processing for more than 5 minutes
+      const processingTime = episode.processedAt ? Date.now() - episode.processedAt : 0;
+      const isStuck = processingTime > 5 * 60 * 1000; // 5 minutes
+      
+      if (isStuck) {
+        console.log("🔧 Episode stuck in processing for", Math.round(processingTime / 1000), "seconds, forcing reset...");
+        // Continue with processing even without force flag
+      } else {
+        return {
+          status: "skipped",
+          reason: "episode_processing",
+        } satisfies DetectionResult;
+      }
     }
 
     const existingJob = (await ctx.runQuery(api.scanJobs.getActiveForTarget, {

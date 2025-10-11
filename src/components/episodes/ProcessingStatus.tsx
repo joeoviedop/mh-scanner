@@ -147,6 +147,26 @@ export default function ProcessingStatus({
         throw new Error(data.error ?? "Failed to start processing");
       }
 
+      // If skipped because episode is processing, retry with force
+      if (data.result?.status === "skipped" && data.result?.reason === "episode_processing") {
+        console.log("⚠️ Episode stuck in processing, retrying with force...");
+        
+        const forceResponse = await fetch("/api/process/detect-mentions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ episodeId, force: true }),
+        });
+
+        const forceData = await forceResponse.json();
+        console.log("📡 Force retry response:", forceData);
+        
+        if (!forceResponse.ok || !forceData.success) {
+          throw new Error(forceData.error ?? "Failed to force processing");
+        }
+      }
+
       // Wait a bit before first poll to allow job creation
       setTimeout(() => {
         fetchJobStatus();
@@ -263,6 +283,12 @@ export default function ProcessingStatus({
           className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
         >
           🔍 Start Mention Detection
+        </button>
+        <button
+          onClick={() => startProcessing(true)}
+          className="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm"
+        >
+          🔄 Force Reprocess (if stuck)
         </button>
         <div className="text-sm text-gray-600 text-center">
           This will analyze the transcript for therapy and mental health mentions
