@@ -118,13 +118,31 @@ export const detectMentionsForEpisode = action({
     try {
       // Get active keywords from configuration
       console.log("🔍 Fetching active keywords from database...");
-      const activeKeywords = await ctx.runQuery(api.keywordConfig.getActiveKeywords);
-      console.log(`📝 Found ${activeKeywords.length} active keywords:`, activeKeywords.slice(0, 10));
+      let activeKeywords = await ctx.runQuery(api.keywordConfig.getActiveKeywords);
+      console.log(`📝 Found ${activeKeywords.length} active keywords from DB:`, activeKeywords.slice(0, 10));
       
+      // FALLBACK: Use hardcoded keywords if database is empty
       if (activeKeywords.length === 0) {
-        console.error("❌ No active keywords configured for detection");
-        console.log("💡 Hint: Initialize keywords by visiting /dashboard/config and clicking 'Initialize Default Keywords'");
-        throw new Error("No active keywords configured for detection. Please initialize keywords first.");
+        console.warn("⚠️ No keywords in database, using fallback keywords...");
+        activeKeywords = [
+          "terapia", "terapeuta", "psicólogo", "psicóloga", "psicología",
+          "salud mental", "psiquiatra", "psiquiatría", "tratamiento psicológico",
+          "sesión de terapia", "mi terapeuta", "mi psicólogo", "mi psicóloga",
+          "ansiedad", "depresión", "depresion", "crisis de pánico", "pánico",
+          "autolesión", "autolesion", "suicidio", "salud emocional",
+          "bienestar mental", "apoyo psicológico", "manejo de emociones",
+          "problemas emocionales", "trauma", "estrés", "estres", "burnout",
+          "ataque de ansiedad", "consulta psicológica", "cuidado mental",
+          "mindfulness", "autoestima", "diagnóstico mental", "diagnostico mental",
+          "terapia familiar", "terapia de pareja", "terapia grupal", "terapia online",
+          "acompañamiento terapéutico", "medicación psiquiátrica", "antidepresivos",
+          "ansiolíticos", "estabilizadores del ánimo", "trastorno", "fobia",
+          "TOC", "TDAH", "bipolar", "esquizofrenia", "borderline", "TEPT",
+          "trastorno de ansiedad", "trastorno depresivo", "ideación suicida",
+          "pensamientos suicidas", "cutting", "bulimia", "anorexia",
+          "trastorno alimenticio", "adicción", "rehabilitación", "desintoxicación"
+        ];
+        console.log(`✅ Using ${activeKeywords.length} fallback keywords`);
       }
 
       console.log(`🎯 Detecting keyword matches in ${transcription.segments.length} segments...`);
