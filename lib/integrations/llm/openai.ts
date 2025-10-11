@@ -31,7 +31,8 @@ export class OpenAIClient {
       throw new Error("Missing OPENAI_API_KEY environment variable");
     }
 
-    this.apiKey = apiKey;
+    // Clean the API key (remove any whitespace or newlines)
+    this.apiKey = apiKey.trim().replace(/[\r\n]/g, '');
     this.endpoint = endpoint;
     this.model = model;
   }
@@ -41,16 +42,23 @@ export class OpenAIClient {
       endpoint: this.endpoint,
       model: this.model,
       hasApiKey: !!this.apiKey,
+      apiKeyLength: this.apiKey?.length,
       fragmentText: input.fragmentText.substring(0, 100) + "...",
       keywords: input.keywords
     });
 
-    const response = await fetch(this.endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiKey}`,
-      },
+    // Validate API key format
+    if (!this.apiKey || !this.apiKey.startsWith('sk-')) {
+      throw new Error("Invalid OpenAI API key format");
+    }
+
+    try {
+      const response = await fetch(this.endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.apiKey}`,
+        },
       body: JSON.stringify({
         model: this.model,
         messages: [
@@ -174,6 +182,12 @@ export class OpenAIClient {
       };
     } catch (error) {
       throw new Error(`Failed to parse OpenAI response: ${error}`);
+    }
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(`OpenAI request failed: ${error}`);
     }
   }
 
