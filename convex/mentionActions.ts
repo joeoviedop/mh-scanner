@@ -117,21 +117,30 @@ export const detectMentionsForEpisode = action({
 
     try {
       // Get active keywords from configuration
-      console.log("🔍 Fetching active keywords...");
+      console.log("🔍 Fetching active keywords from database...");
       const activeKeywords = await ctx.runQuery(api.keywordConfig.getActiveKeywords);
-      console.log(`📝 Found ${activeKeywords.length} active keywords:`, activeKeywords.slice(0, 5));
+      console.log(`📝 Found ${activeKeywords.length} active keywords:`, activeKeywords.slice(0, 10));
       
       if (activeKeywords.length === 0) {
         console.error("❌ No active keywords configured for detection");
-        throw new Error("No active keywords configured for detection");
+        console.log("💡 Hint: Initialize keywords by visiting /dashboard/config and clicking 'Initialize Default Keywords'");
+        throw new Error("No active keywords configured for detection. Please initialize keywords first.");
       }
 
       console.log(`🎯 Detecting keyword matches in ${transcription.segments.length} segments...`);
+      console.log("First few segments preview:", transcription.segments.slice(0, 3).map(s => s.text.substring(0, 50) + "..."));
       const matches = detectKeywordMatches(transcription.segments, activeKeywords, {
         windowSeconds: 45,
         maxMatches: 30,
       });
       console.log(`✅ Found ${matches.length} keyword matches`);
+      if (matches.length > 0) {
+        console.log("First match example:", {
+          text: matches[0].matchedText.substring(0, 100) + "...",
+          keywords: matches[0].matchedKeywords,
+          startTime: matches[0].startTime
+        });
+      }
 
       if (matches.length === 0) {
         console.log("🔍 No keyword matches found - completing job without LLM analysis");
@@ -180,16 +189,27 @@ export const detectMentionsForEpisode = action({
 
       for (let index = 0; index < matches.length; index += 1) {
         const match = matches[index];
-        console.log(`🤖 Classifying fragment ${index + 1}/${matches.length}:`, match.matchedText.substring(0, 50) + "...");
+        console.log(`🤖 Classifying fragment ${index + 1}/${matches.length}:`);
+        console.log(`   Text: ${match.matchedText.substring(0, 80)}...`);
+        console.log(`   Keywords: ${match.matchedKeywords.join(", ")}`);
+        console.log(`   Language: ${transcription.language || "unknown"}`);
         
-        const classification = await client.classifyFragment({
-          fragmentText: match.matchedText,
-          contextText: match.contextText,
-          keywords: match.matchedKeywords,
-          language: transcription.language,
-        });
+        let classification;
+        try {
+          classification = await client.classifyFragment({
+            fragmentText: match.matchedText,
+            contextText: match.contextText,
+            keywords: match.matchedKeywords,
+            language: transcription.language,
+          });
 
-        confidenceTotal += classification.confianza;
+          console.log(`   ✅ Classified: ${classification.tema} (${classification.confianza}% confidence)`);
+          confidenceTotal += classification.confianza;
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.error(`   ❌ Classification failed for fragment ${index + 1}:`, errorMessage);
+          throw error; // Re-throw to fail the entire process
+        }
 
         const startTime = Math.max(0, Math.round(match.startTime));
         const endTime = Math.max(startTime, Math.round(match.endTime));

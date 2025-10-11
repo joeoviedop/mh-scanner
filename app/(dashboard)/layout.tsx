@@ -40,6 +40,9 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
               <Link href="/dashboard/episodes" className="hover:text-slate-900">
                 Episodios
               </Link>
+              <Link href="/dashboard/config" className="hover:text-slate-900">
+                Configuración
+              </Link>
             </nav>
             <LogoutButton />
           </div>

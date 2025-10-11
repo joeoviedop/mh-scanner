@@ -76,16 +76,33 @@ export default function ProcessingStatus({
   }, [episodeId]);
 
   useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
     if (job?.status === "running" && !isPolling) {
       setIsPolling(true);
-      const interval = setInterval(fetchJobStatus, 2000); // Poll every 2 seconds
-      
-      return () => {
+      interval = setInterval(fetchJobStatus, 1000); // Poll every 1 second for better responsiveness
+    } else if (job?.status === "pending" && !isPolling) {
+      // Also poll for pending jobs to catch when they start
+      setIsPolling(true);
+      interval = setInterval(fetchJobStatus, 1000);
+    }
+    
+    if (job?.status === "completed" || job?.status === "failed") {
+      setIsPolling(false);
+      if (interval) {
         clearInterval(interval);
-        setIsPolling(false);
-      };
+      }
     }
 
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+      setIsPolling(false);
+    };
+  }, [job?.status, isPolling, fetchJobStatus]);
+
+  useEffect(() => {
     if (job?.status === "completed" && onCompletion) {
       onCompletion();
     }
@@ -93,7 +110,7 @@ export default function ProcessingStatus({
     if (onProgressUpdate) {
       onProgressUpdate(job?.status ?? "pending", job?.progress ?? 0);
     }
-  }, [job, isPolling, onProgressUpdate, onCompletion, fetchJobStatus]);
+  }, [job, onProgressUpdate, onCompletion]);
 
   const startProcessing = async (force = false) => {
     try {
@@ -122,11 +139,8 @@ export default function ProcessingStatus({
       }
 
       // Start polling immediately after starting
+      setIsPolling(true);
       await fetchJobStatus();
-      
-      if (data.result?.status !== "queued") {
-        setIsPolling(true);
-      }
     } catch (error) {
       setJob(prev => prev ? {
         ...prev,
