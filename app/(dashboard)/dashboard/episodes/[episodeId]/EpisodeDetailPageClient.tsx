@@ -1,10 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
-import ProcessingStatus from "@/src/components/episodes/ProcessingStatus";
-import MentionResults from "@/src/components/episodes/MentionResults";
+
+import { Badge } from "@/components/ui/badge";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import ProcessingStatus from "@/components/episodes/ProcessingStatus";
+import MentionResults from "@/components/episodes/MentionResults";
 import type { Id } from "@/convex/_generated/dataModel";
 
 interface TranscriptSegment {
@@ -35,6 +42,9 @@ interface Episode {
   duration: string;
   publishedAt: number;
   thumbnailUrl?: string;
+  viewCount?: string;
+  likeCount?: string;
+  commentCount?: string;
   hasTranscription: boolean;
   transcriptionFetchedAt?: number | null;
   transcriptionError?: string | null;
@@ -44,36 +54,134 @@ interface Episode {
   status: "discovered" | "transcribing" | "processing" | "completed" | "error" | "skipped";
 }
 
-interface Fragment {
+type SensitivityFlag =
+  | "autolesion"
+  | "suicidio"
+  | "abuso"
+  | "trauma"
+  | "crisis"
+  | "ninguna";
+
+interface FragmentFeedbackSummary {
+  total: number;
+  positive: number;
+  negative: number;
+  approvalRate: number | null;
+}
+
+interface MentionFragment {
   _id: string;
+  videoId: string;
   text: string;
   context: string;
   startTime: number;
   endTime: number;
   detectedAt: number;
-  youtubeUrl: string;
+  detectedAtIso?: string;
+  confidenceScore: number;
+  rankScore: number;
+  feedbackSummary: FragmentFeedbackSummary;
   classification: {
-    tema: string;
-    tono: string;
+    tema: "testimonio" | "recomendacion" | "reflexion" | "dato" | "otro";
+    tono: "positivo" | "neutro" | "critico" | "preocupante";
     confianza: number;
-    sensibilidad: string[];
+    sensibilidad: SensitivityFlag[];
     razon?: string;
   };
+}
+
+interface FeedbackStats {
+  totalFragments: number;
+  fragmentsWithFeedback: number;
+  feedbackCount: number;
+  positiveFeedback: number;
+  negativeFeedback: number;
+  approvalRate: number | null;
+  coverageRate: number;
+  averageConfidence: number;
+  averageRankScore: number;
+  topIssues: { issue: string; count: number }[];
+  promptRecommendations: string[];
 }
 
 interface EpisodeDetailPageClientProps {
   episodeId: string;
 }
 
+const STATUS_CONFIG: Record<
+  Episode["status"],
+  { label: string; badge: React.ComponentProps<typeof Badge>["variant"] }
+> = {
+  discovered: { label: "Discovering", badge: "neutral" },
+  transcribing: { label: "Transcribing", badge: "warning" },
+  processing: { label: "Processing", badge: "warning" },
+  completed: { label: "Completed", badge: "success" },
+  error: { label: "Needs attention", badge: "danger" },
+  skipped: { label: "Skipped", badge: "outline" },
+};
+
+const SENTENCE_SPLIT_REGEX = /(?<=[.!?])\s+(?=<|[A-Za-zÁÉÍÓÚÜÑáéíóúüñ¿¡0-9])/u;
+const KEYWORD_HIGHLIGHT_CLASS =
+  "rounded-md bg-indigo-100 px-1 py-0.5 text-indigo-700";
+
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildHighlightedNodes(
+  text: string,
+  keywords: string[],
+): React.ReactNode[] {
+  if (!keywords || keywords.length === 0) {
+    return [text];
+  }
+
+  const normalizedKeywords = keywords
+    .map((keyword) => keyword.trim())
+    .filter((keyword) => keyword.length > 0);
+
+  if (normalizedKeywords.length === 0) {
+    return [text];
+  }
+
+  const escapedKeywords = normalizedKeywords.map(escapeRegex);
+  const keywordLookup = new Set(
+    normalizedKeywords.map((keyword) => keyword.toLowerCase()),
+  );
+
+  const regex = new RegExp(`\\b(${escapedKeywords.join("|")})\\b`, "gi");
+  const parts = text.split(regex);
+
+  return parts
+    .filter((part) => part !== "")
+    .map((part, index) => {
+      const normalized = part.toLowerCase();
+      if (keywordLookup.has(normalized)) {
+        return (
+          <mark
+            key={`kw-${index}-${normalized}`}
+            className={KEYWORD_HIGHLIGHT_CLASS}
+          >
+            {part}
+          </mark>
+        );
+      }
+
+      return <Fragment key={`txt-${index}`}>{part}</Fragment>;
+    });
+}
+
 export default function EpisodeDetailPageClient({ episodeId }: EpisodeDetailPageClientProps) {
   const [episode, setEpisode] = useState<Episode | null>(null);
-  const [transcript, setTranscript] = useState<Transcript | null>(null);
-  const [fragments, setFragments] = useState<Fragment[]>([]);
+const [transcript, setTranscript] = useState<Transcript | null>(null);
+  const [fragments, setFragments] = useState<MentionFragment[]>([]);
   const [loading, setLoading] = useState(true);
   const [transcriptLoading, setTranscriptLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"full" | "segments">("full");
+  const [feedbackStats, setFeedbackStats] = useState<FeedbackStats | null>(null);
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetchEpisodeData();
@@ -85,7 +193,6 @@ export default function EpisodeDetailPageClient({ episodeId }: EpisodeDetailPage
       setLoading(true);
       setError(null);
 
-      // Fetch episode details
       const episodeResponse = await fetch(`/api/episodes`);
       const episodeData = await episodeResponse.json();
 
@@ -100,10 +207,13 @@ export default function EpisodeDetailPageClient({ episodeId }: EpisodeDetailPage
 
       setEpisode(foundEpisode);
 
-      // If episode has transcript, fetch it
       if (foundEpisode.hasTranscription) {
         await fetchTranscript();
         await fetchFragments();
+      } else {
+        setTranscript(null);
+        setFragments([]);
+        setFeedbackStats(null);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load episode");
@@ -132,21 +242,85 @@ export default function EpisodeDetailPageClient({ episodeId }: EpisodeDetailPage
     }
   };
 
+  const fetchFeedbackStats = async () => {
+    try {
+      const response = await fetch(`/api/episodes/${episodeId}/feedback-stats`, {
+        cache: "no-store",
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error ?? "Failed to load feedback stats");
+      }
+
+      setFeedbackStats(data.stats);
+    } catch (err) {
+      setFeedbackStats(null);
+      console.error(err);
+    }
+  };
+
   const fetchFragments = async () => {
     try {
       const response = await fetch(`/api/episodes/${episodeId}/fragments`);
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        // Fragments might not exist yet, that's okay
         setFragments([]);
+        setFeedbackStats(null);
         return;
       }
 
       setFragments(data.fragments || []);
+      await fetchFeedbackStats();
     } catch (err) {
-      // Fragments might not exist yet, that's okay
       setFragments([]);
+      setFeedbackStats(null);
+    }
+  };
+
+  const handleFeedbackSubmit = async (
+    fragmentId: string,
+    rating: "useful" | "not_useful",
+    options?: { issues?: string[]; comment?: string },
+  ) => {
+    setError(null);
+    setFeedbackSubmitting((prev) => ({
+      ...prev,
+      [fragmentId]: true,
+    }));
+
+    try {
+      const response = await fetch("/api/feedback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fragmentId,
+          rating,
+          issues: options?.issues,
+          comment: options?.comment,
+          submittedBy: "dashboard_user",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error ?? "No se pudo registrar el feedback");
+      }
+
+      await fetchFragments();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "No se pudo registrar el feedback";
+      setError(message);
+    } finally {
+      setFeedbackSubmitting((prev) => {
+        const { [fragmentId]: _removed, ...rest } = prev;
+        return rest;
+      });
     }
   };
 
@@ -174,7 +348,7 @@ export default function EpisodeDetailPageClient({ episodeId }: EpisodeDetailPage
 
       if (data.result?.status === "completed") {
         setStatusMessage("Transcript fetched successfully.");
-        await fetchEpisodeData(); // Refresh all data
+        await fetchEpisodeData();
       } else if (data.result?.status === "queued") {
         setStatusMessage("Transcription already in progress.");
       } else if (data.result?.status === "skipped") {
@@ -190,72 +364,73 @@ export default function EpisodeDetailPageClient({ episodeId }: EpisodeDetailPage
     }
   };
 
-
-
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
+  const formattedTranscriptParagraphs = useMemo(() => {
+    if (!transcript) {
+      return null;
+    }
 
+    const sentences = transcript.fullText
+      .split(SENTENCE_SPLIT_REGEX)
+      .map((sentence) => sentence.trim())
+      .filter(Boolean);
 
-  const highlightKeywords = (text: string, keywords: string[]) => {
-    if (!keywords || keywords.length === 0) return text;
-    
-    let highlightedText = text;
-    keywords.forEach(keyword => {
-      const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\b`, 'gi');
-      highlightedText = highlightedText.replace(regex, `<mark class="bg-yellow-200 px-1 rounded">$&</mark>`);
+    const paragraphs: string[] = [];
+    let buffer: string[] = [];
+
+    sentences.forEach((sentence) => {
+      buffer.push(sentence);
+      const bufferLength = buffer
+        .map((chunk) => chunk.length)
+        .reduce((acc, curr) => acc + curr, 0);
+
+      if (bufferLength > 320 || buffer.length >= 3) {
+        paragraphs.push(buffer.join(" "));
+        buffer = [];
+      }
     });
-    
-    return highlightedText;
-  };
 
-  const getStatusColor = (status: Episode["status"]) => {
-    switch (status) {
-      case "discovered":
-        return "bg-blue-100 text-blue-800";
-      case "transcribing":
-        return "bg-yellow-100 text-yellow-800";
-      case "processing":
-        return "bg-orange-100 text-orange-800";
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "error":
-        return "bg-red-100 text-red-800";
-      case "skipped":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+    if (buffer.length > 0) {
+      paragraphs.push(buffer.join(" "));
     }
-  };
 
-  const getStatusText = (status: Episode["status"]) => {
-    switch (status) {
-      case "discovered":
-        return "📥 Discovered";
-      case "transcribing":
-        return "📝 Getting Transcript";
-      case "processing":
-        return "🔍 Processing";
-      case "completed":
-        return "✅ Completed";
-      case "error":
-        return "❌ Error";
-      case "skipped":
-        return "⏭️ Skipped";
-      default:
-        return status;
+    return paragraphs.map((paragraph, index) => (
+      <p key={`paragraph-${index}`}>
+        {buildHighlightedNodes(paragraph, transcript.keywordMatches)}
+      </p>
+    ));
+  }, [transcript]);
+
+  const statusBadge = episode ? STATUS_CONFIG[episode.status] : null;
+
+  function formatCompactNumber(value?: string) {
+    if (!value) {
+      return null;
     }
-  };
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) {
+      return value;
+    }
+    if (numeric >= 1_000_000) {
+      return `${(numeric / 1_000_000).toFixed(1)}M`;
+    }
+    if (numeric >= 1_000) {
+      return `${(numeric / 1_000).toFixed(1)}K`;
+    }
+    return numeric.toString();
+  }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading episode...</p>
+      <div className="">
+        <div className="">
+          <span className="" />
+          <p className="">Cargando episodio</p>
         </div>
       </div>
     );
@@ -263,291 +438,322 @@ export default function EpisodeDetailPageClient({ episodeId }: EpisodeDetailPage
 
   if (error && !episode) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error</h1>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Link
-            href="/dashboard/episodes"
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            ← Back to Episodes
-          </Link>
-        </div>
+      <div className="">
+        <Card className="">
+          <CardContent className="">
+            <div className="">
+              ⚠️
+            </div>
+            <CardTitle className="">Ocurrió un problema</CardTitle>
+            <CardDescription className="">{error}</CardDescription>
+            <Button asChild>
+              <Link href="/dashboard/episodes">← Volver a episodios</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (!episode) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="text-gray-400 text-6xl mb-4">📺</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Episode Not Found</h1>
-          <p className="text-gray-600 mb-4">The episode you&apos;re looking for doesn&apos;t exist.</p>
-          <Link
-            href="/dashboard/episodes"
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            ← Back to Episodes
-          </Link>
-        </div>
+      <div className="">
+        <Card className="">
+          <CardContent className="">
+            <div className="">
+              📺
+            </div>
+            <CardTitle className="">No encontramos el episodio</CardTitle>
+            <CardDescription className="">
+              El episodio que intentas abrir no está disponible.
+            </CardDescription>
+            <Button asChild>
+              <Link href="/dashboard/episodes">← Volver a episodios</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
+  const publishedRelative = formatDistanceToNow(new Date(episode.publishedAt), { addSuffix: true });
+  const transcriptionUpdated = episode.transcriptionFetchedAt
+    ? formatDistanceToNow(new Date(episode.transcriptionFetchedAt), { addSuffix: true })
+    : null;
+  const viewCount = formatCompactNumber(episode.viewCount);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/dashboard/episodes"
-                className="text-gray-400 hover:text-gray-600 text-sm font-medium"
-              >
-                ← Episodes
-              </Link>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <h1 className="text-lg font-semibold text-gray-900">Episode Detail</h1>
-            </div>
-            
-            <div className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(episode.status)}`}>
-              {getStatusText(episode.status)}
-            </div>
+    <div className="">
+      <header className="">
+        <Breadcrumb
+          items={[
+            { label: "Inicio", href: "/dashboard" },
+            { label: "Episodios", href: "/dashboard/episodes" },
+            { label: episode.title || "Detalle" },
+          ]}
+        />
+        <div className="">
+          <div className="">
+            <p className="">
+              Podcast Therapy Scanner
+            </p>
+            <h1 className="">{episode.title}</h1>
+            <p className="">
+              Revisa la transcripción, ejecuta la detección de menciones y comparte hallazgos claros con el equipo.
+            </p>
+          </div>
+          <div className="">
+            {statusBadge ? (
+              <Badge variant={statusBadge.badge} className="">
+                {statusBadge.label}
+              </Badge>
+            ) : null}
+            {episode.hasMentions ? <Badge variant="success">Menciones detectadas</Badge> : null}
+            {episode.hasBeenProcessed && !episode.hasMentions ? (
+              <Badge variant="neutral">Procesado</Badge>
+            ) : null}
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Status Messages */}
-        {statusMessage && (
-          <div className="mb-6 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-            {statusMessage}
-          </div>
-        )}
+      {statusMessage ? (
+        <div className="">
+          {statusMessage}
+        </div>
+      ) : null}
 
-        {error && (
-          <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+      {error ? (
+        <div className="">
+          {error}
+        </div>
+      ) : null}
 
-        {/* Episode Info */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-          <div className="p-6">
-            <div className="flex gap-6">
-              {/* Thumbnail */}
-              <div className="flex-shrink-0">
-                {episode.thumbnailUrl ? (
-                  <img
-                    src={episode.thumbnailUrl}
-                    alt={episode.title}
-                    className="w-48 h-28 object-cover rounded-lg"
-                  />
-                ) : (
-                  <div className="w-48 h-28 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-400 text-3xl">🎥</span>
-                  </div>
-                )}
+      <div className="">
+        <aside className="">
+          <section className="">
+            <div className="">
+              {episode.thumbnailUrl ? (
+                <Image
+                  src={episode.thumbnailUrl}
+                  alt={episode.title}
+                  fill
+                  sizes="(min-width: 1280px) 360px, 100vw"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="">🎧</div>
+              )}
+            </div>
+            <div className="">
+              <div className="">
+                {statusBadge ? (
+                  <Badge variant={statusBadge.badge} className="">
+                    {statusBadge.label}
+                  </Badge>
+                ) : null}
+                {episode.hasMentions ? <Badge variant="success">Menciones detectadas</Badge> : null}
+                {episode.hasBeenProcessed && !episode.hasMentions ? (
+                  <Badge variant="neutral">Procesado</Badge>
+                ) : null}
               </div>
-
-              {/* Episode Details */}
-              <div className="flex-1 min-w-0">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">
-                  {episode.title}
-                </h2>
-                
-                <div className="text-sm text-gray-600 space-y-1 mb-4">
-                  <p>Channel: {episode.channelTitle}</p>
-                  <p>Duration: {episode.duration}</p>
-                  <p>Published: {formatDistanceToNow(new Date(episode.publishedAt), { addSuffix: true })}</p>
-                  {episode.transcriptionFetchedAt && (
-                    <p>Transcript fetched: {formatDistanceToNow(new Date(episode.transcriptionFetchedAt), { addSuffix: true })}</p>
-                  )}
+              <dl className="">
+                <div className="">
+                  <dt className="">Canal</dt>
+                  <dd className="">{episode.channelTitle}</dd>
                 </div>
+                <div className="">
+                  <dt className="">Publicado</dt>
+                  <dd className="">{publishedRelative}</dd>
+                </div>
+                <div className="">
+                  <dt className="">Duración</dt>
+                  <dd className="">{episode.duration}</dd>
+                </div>
+                <div className="">
+                  <dt className="">Menciones</dt>
+                  <dd className="">
+                    {episode.mentionCount > 0 ? episode.mentionCount : "—"}
+                  </dd>
+                </div>
+                {viewCount ? (
+                  <div className="">
+                    <dt className="">Vistas</dt>
+                    <dd className="">{viewCount}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            </div>
+          </section>
 
-                {episode.description && (
-                  <p className="text-sm text-gray-600 line-clamp-3">
-                    {episode.description}
-                  </p>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex-shrink-0 space-y-3">
+          <section className="">
+            <h2 className="">
+              Acciones rápidas
+            </h2>
+            <div className="">
+              <Button asChild variant="secondary" className="w-full">
                 <a
                   href={`https://www.youtube.com/watch?v=${episode.videoId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full px-4 py-2 bg-red-600 text-white text-center rounded-lg hover:bg-red-700"
                 >
-                  🔗 Open on YouTube
+                  Abrir en YouTube
                 </a>
-                
-                {!episode.hasTranscription && episode.status !== "skipped" && (
-                  <button
-                    onClick={handleFetchTranscription}
-                    disabled={transcriptLoading || episode.status === "transcribing"}
-                    className="block w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  >
-                    {transcriptLoading || episode.status === "transcribing"
-                      ? "⏳ Fetching..."
-                      : "📝 Fetch Transcript"}
-                  </button>
-                )}
-                
-                {episode.hasTranscription && (
-                  <ProcessingStatus 
-                    episodeId={episodeId as Id<"episodes">}
-                    onCompletion={async () => {
-                      await fetchEpisodeData();
-                      await fetchFragments();
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+              </Button>
 
-        {/* Transcript Section */}
-        {episode.hasTranscription && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-            <div className="border-b border-gray-200 p-6">
-              <div className="flex items-center justify-between">
+              {!episode.hasTranscription && episode.status !== "skipped" ? (
+                <Button
+                  onClick={handleFetchTranscription}
+                  isLoading={transcriptLoading || episode.status === "transcribing"}
+                  loadingLabel="Obteniendo transcripción…"
+                  className="w-full"
+                >
+                  Obtener transcripción
+                </Button>
+              ) : null}
+
+              {episode.hasTranscription ? (
+                <div className="">
+                  <p className="">Transcripción lista</p>
+                  {transcriptionUpdated ? (
+                    <p className="">Actualizada {transcriptionUpdated}</p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+            {episode.hasTranscription ? (
+              <div className="">
+                <ProcessingStatus
+                  episodeId={episodeId as Id<"episodes">}
+                  onCompletion={async () => {
+                    await fetchEpisodeData();
+                    await fetchFragments();
+                  }}
+                />
+              </div>
+            ) : null}
+          </section>
+
+          {episode.description ? (
+            <section className="">
+              <h2 className="">
+                Resumen del episodio
+              </h2>
+              <p className="">{episode.description}</p>
+            </section>
+          ) : null}
+        </aside>
+
+        <section className="">
+          {episode.hasTranscription ? (
+            <>
+              <div className="">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Transcript</h3>
-                  {transcript && (
-                    <div className="text-sm text-gray-500 mt-1">
-                      {transcript.wordCount.toLocaleString()} words • {transcript.language || "Unknown language"}
-                      {transcript.isAutoGenerated && " • Auto-generated"}
-                    </div>
+                  <h2 className="">Transcripción</h2>
+                  {transcript ? (
+                    <p className="">
+                      {transcript.wordCount.toLocaleString()} palabras · {transcript.language || "Idioma desconocido"}
+                      {transcript.isAutoGenerated ? " · Generada automáticamente" : ""}
+                    </p>
+                  ) : (
+                    <p className="">Cargando transcripción…</p>
                   )}
                 </div>
-                
-                {transcript && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setViewMode("full")}
-                      className={`px-4 py-2 text-sm rounded-lg ${
-                        viewMode === "full"
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      Full Text
-                    </button>
-                    <button
-                      onClick={() => setViewMode("segments")}
-                      className={`px-4 py-2 text-sm rounded-lg ${
-                        viewMode === "segments"
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      Segments ({transcript.segments.length})
-                    </button>
+                {transcript ? (
+                  <SegmentedControl
+                    value={viewMode}
+                    onChange={(value) => setViewMode(value as "full" | "segments")}
+                    options={[
+                      { value: "full", label: "Texto completo" },
+                      {
+                        value: "segments",
+                        label: "Segmentos",
+                        hint: transcript.segments.length,
+                      },
+                    ]}
+                  />
+                ) : null}
+              </div>
+
+              {transcript?.hasTherapyKeywords && transcript.keywordMatches.length > 0 ? (
+                <div className="">
+                  {transcript.keywordMatches.map((keyword) => (
+                    <Badge key={keyword} variant="default" className="">
+                      {keyword}
+                    </Badge>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="">
+                {transcriptLoading ? (
+                  <div className="">
+                    <span className="" />
+                    Cargando transcripción…
+                  </div>
+                ) : transcript ? (
+                  <div className="">
+                    {viewMode === "full" ? (
+                      <div className="">
+                        {formattedTranscriptParagraphs}
+                      </div>
+                    ) : (
+                      <div className="">
+                        {transcript.segments.map((segment, index) => (
+                          <div
+                            key={`${segment.start}-${segment.end}-${index}`}
+                            className=""
+                          >
+                            <div className="">
+                              <span>{formatTime(segment.start)}</span>
+                              <span>{formatTime(segment.end)}</span>
+                            </div>
+                            <div className="">
+                              {buildHighlightedNodes(segment.text, transcript.keywordMatches)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="">
+                    La transcripción aún no está disponible. Solicítala desde las acciones rápidas.
                   </div>
                 )}
               </div>
-              
-              {transcript?.hasTherapyKeywords && transcript.keywordMatches.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium text-green-700 mb-2">
-                    🎯 Therapy Keywords Found ({transcript.keywordMatches.length})
-                  </h4>
-                  <div className="flex flex-wrap gap-1">
-                    {transcript.keywordMatches.map((keyword, index) => (
-                      <span
-                        key={index}
-                        className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full"
-                      >
-                        {keyword}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+            </>
+          ) : (
+            <div className="">
+              <span className="">
+                📝
+              </span>
+              <h2 className="">Transcripción pendiente</h2>
+              <p className="">
+                Obtén la transcripción para habilitar la detección de menciones y los análisis automáticos para este episodio.
+              </p>
+              <Button
+                onClick={handleFetchTranscription}
+                isLoading={transcriptLoading || episode.status === "transcribing"}
+              >
+                Obtener transcripción
+              </Button>
             </div>
+          )}
+        </section>
+      </div>
 
-            <div className="p-6">
-              {transcriptLoading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-gray-500">Loading transcript...</p>
-                </div>
-              ) : transcript ? (
-                <div className="max-h-96 overflow-y-auto">
-                  {viewMode === "full" ? (
-                    <div className="prose max-w-none">
-                      <div 
-                        className="text-gray-700 leading-relaxed"
-                        dangerouslySetInnerHTML={{
-                          __html: highlightKeywords(transcript.fullText, transcript.keywordMatches)
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {transcript.segments.map((segment, index) => (
-                        <div
-                          key={index}
-                          className="flex gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
-                        >
-                          <div className="text-sm text-blue-600 font-mono whitespace-nowrap">
-                            {formatTime(segment.start)} - {formatTime(segment.end)}
-                          </div>
-                          <div 
-                            className="flex-1 text-gray-700 text-sm"
-                            dangerouslySetInnerHTML={{
-                              __html: highlightKeywords(segment.text, transcript.keywordMatches)
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-gray-500">
-                  <div className="text-4xl mb-4">📝</div>
-                  <p>No transcript available yet.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Fragments/Mentions Section */}
+      <section className="">
         <MentionResults
-          fragments={fragments.map(fragment => ({
-            _id: fragment._id,
-            startTime: fragment.startTime,
-            endTime: fragment.endTime,
-            matchedText: fragment.text,
-            contextText: fragment.context,
-            matchedKeywords: [],
-            videoId: episode.videoId,
-            classification: {
-              tema: fragment.classification.tema,
-              tono: fragment.classification.tono as "positiva" | "neutral" | "negativa",
-              sensibilidad: fragment.classification.sensibilidad,
-              confianza: fragment.classification.confianza,
-              razon: fragment.classification.razon,
-            },
-            confidenceScore: fragment.classification.confianza,
-            detectedAt: fragment.detectedAt,
-          }))}
+          fragments={fragments}
           episodeTitle={episode.title}
           channelName={episode.channelTitle}
-          onRefresh={async () => {
-            await fetchFragments();
-          }}
+          onRefresh={fetchFragments}
+          onFeedback={handleFeedbackSubmit}
+          feedbackSubmitting={feedbackSubmitting}
+          feedbackStats={feedbackStats}
         />
-      </div>
+      </section>
     </div>
   );
 }

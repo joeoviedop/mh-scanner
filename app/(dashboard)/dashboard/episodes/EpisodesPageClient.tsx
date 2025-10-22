@@ -1,8 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import React from "react";
 
-import { EpisodeList } from "@/src/components/episodes/EpisodeList";
+import { Badge } from "@/components/ui/badge";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+
+import { EpisodeList } from "@/components/episodes/EpisodeList";
 
 
 type Episode = {
@@ -50,6 +55,15 @@ interface Props {
   initialEpisodes: Episode[];
 }
 
+const STATUS_FILTERS: Array<{ value: "all" | Episode["status"]; label: string }> = [
+  { value: "all", label: "Todos" },
+  { value: "completed", label: "Completados" },
+  { value: "processing", label: "Procesando" },
+  { value: "transcribing", label: "Transcribiendo" },
+  { value: "discovered", label: "Nuevos" },
+  { value: "error", label: "Errores" },
+];
+
 export default function EpisodesPageClient({ initialEpisodes }: Props) {
   const [episodes, setEpisodes] = React.useState<Episode[]>(initialEpisodes);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -60,12 +74,34 @@ export default function EpisodesPageClient({ initialEpisodes }: Props) {
   const [selectedEpisodeId, setSelectedEpisodeId] = React.useState<string | null>(null);
   const [fragments, setFragments] = React.useState<Fragment[]>([]);
   const [fragmentsLoading, setFragmentsLoading] = React.useState(false);
-
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<"all" | Episode["status"]>("all");
+  const [mentionsFilter, setMentionsFilter] = React.useState<"all" | "with">("all");
 
   const selectedEpisode = React.useMemo(() => {
     if (!selectedEpisodeId) return null;
     return episodes.find((episode) => episode._id === selectedEpisodeId) ?? null;
   }, [episodes, selectedEpisodeId]);
+
+  const filteredEpisodes = React.useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+
+    return episodes.filter((episode) => {
+      const matchesQuery =
+        query.length === 0 ||
+        [episode.title, episode.channelTitle, episode.description]
+          .filter(Boolean)
+          .some((value) => value?.toLowerCase().includes(query));
+
+      const matchesStatus = statusFilter === "all" || episode.status === statusFilter;
+      const matchesMentions = mentionsFilter === "all" || episode.hasMentions;
+
+      return matchesQuery && matchesStatus && matchesMentions;
+    });
+  }, [episodes, searchTerm, statusFilter, mentionsFilter]);
+
+  const filteredCount = filteredEpisodes.length;
+  const totalCount = episodes.length;
 
   const refreshEpisodes = React.useCallback(async () => {
     setIsLoading(true);
@@ -156,7 +192,7 @@ export default function EpisodesPageClient({ initialEpisodes }: Props) {
         setFetchingIds((prev) => prev.filter((id) => id !== episode._id));
       }
     },
-    [refreshEpisodes, loadFragments, selectedEpisodeId]
+    [refreshEpisodes, loadFragments, selectedEpisodeId],
   );
 
   const handleDetectMentions = React.useCallback(
@@ -200,7 +236,7 @@ export default function EpisodesPageClient({ initialEpisodes }: Props) {
         setDetectingIds((prev) => prev.filter((id) => id !== episode._id));
       }
     },
-    [refreshEpisodes, loadFragments, selectedEpisodeId]
+    [refreshEpisodes, loadFragments, selectedEpisodeId],
   );
 
   const handleEpisodeClick = React.useCallback(
@@ -208,113 +244,202 @@ export default function EpisodesPageClient({ initialEpisodes }: Props) {
       setSelectedEpisodeId(episode._id);
       await loadFragments(episode);
     },
-    [loadFragments]
+    [loadFragments],
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Episodes</h1>
-          <p className="text-sm text-slate-600">Manage transcripts and detected mentions.</p>
-        </div>
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-          onClick={refreshEpisodes}
-          disabled={isLoading}
-        >
-          🔄 Refresh
-        </button>
-      </div>
-
-      {statusMessage && (
-        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          {statusMessage}
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      <EpisodeList
-        episodes={episodes}
-        isLoading={isLoading}
-        onEpisodeClick={handleEpisodeClick}
-        onFetchTranscription={handleFetchTranscription}
-        fetchingTranscriptionIds={fetchingIds}
-        onDetectMentions={handleDetectMentions}
-        detectingMentionIds={detectingIds}
-
-        showChannel
-      />
-
-      {selectedEpisode && (
-        <div className="rounded-lg border border-slate-200 bg-white p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900">Fragments for: {selectedEpisode.title}</h2>
-              <p className="text-sm text-slate-600">
-                {fragmentsLoading
-                  ? "Loading fragments..."
-                  : fragments.length === 0
-                  ? "No fragments detected yet."
-                  : `${fragments.length} fragment${fragments.length === 1 ? "" : "s"} detected.`}
+    <div className="">
+      <header className="">
+        <Breadcrumb
+          items={[
+            { label: "Inicio", href: "/dashboard" },
+            { label: "Episodios" },
+          ]}
+        />
+        <div className="">
+          <div className="">
+            <div className="">
+              <h1 className="">Episodios</h1>
+              <p className="">
+                Gestiona transcripciones, detección de menciones y prioriza qué revisar junto al equipo.
               </p>
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <span>Status: {selectedEpisode.status}</span>
-              <span>•</span>
-              <span>{selectedEpisode.hasTranscription ? "Transcript ready" : "No transcript"}</span>
+          </div>
+
+          <div className="">
+            <div className="">
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className=""
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.6}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m21 21-4.35-4.35" />
+                <circle cx="11" cy="11" r="7" />
+              </svg>
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Buscar por título, canal o descripción…"
+                className=""
+              />
+            </div>
+            <div className="">
+              {STATUS_FILTERS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setStatusFilter(option.value)}
+                  className={""}
+                >
+                  {option.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setMentionsFilter((prev) => (prev === "with" ? "all" : "with"))}
+                className={""}
+              >
+                Solo con menciones
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {statusMessage ? (
+        <div className="">
+          {statusMessage}
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="">
+          {error}
+        </div>
+      ) : null}
+
+      <section className="">
+        <div className="">
+          <div>
+            <h2 className="">Listado de episodios</h2>
+            <p className="">
+              Mostrando {filteredCount} de {totalCount} episodios sincronizados.
+            </p>
+          </div>
+          <div className="">
+            <Badge variant="outline" className="">
+              Sincronizado con Convex
+            </Badge>
+            <Button variant="secondary" size="sm" onClick={refreshEpisodes} isLoading={isLoading}>
+              Refrescar
+            </Button>
+          </div>
+        </div>
+
+        <EpisodeList
+          episodes={filteredEpisodes}
+          isLoading={isLoading}
+          onEpisodeClick={handleEpisodeClick}
+          onFetchTranscription={handleFetchTranscription}
+          fetchingTranscriptionIds={fetchingIds}
+          onDetectMentions={handleDetectMentions}
+          detectingMentionIds={detectingIds}
+          showChannel
+        />
+      </section>
+
+      {selectedEpisode ? (
+        <section className="">
+          <div className="">
+            <div className="">
+              <h2 className="">Fragmentos detectados</h2>
+              <p className="">
+                {fragmentsLoading
+                  ? "Cargando fragmentos…"
+                  : fragments.length === 0
+                  ? "Aún no hay fragmentos para este episodio."
+                  : `${fragments.length} fragment${fragments.length === 1 ? "" : "os"} detectados.`}
+              </p>
+              <p className="">{selectedEpisode.title}</p>
+            </div>
+            <div className="">
+              <Badge variant="outline" className="">
+                {selectedEpisode.status}
+              </Badge>
+              <Badge variant={selectedEpisode.hasTranscription ? "success" : "neutral"}>
+                {selectedEpisode.hasTranscription ? "Transcripción lista" : "Sin transcripción"}
+              </Badge>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className=""
+              >
+                <Link href={`/dashboard/episodes/${selectedEpisode._id}`}>Abrir detalle</Link>
+              </Button>
             </div>
           </div>
 
-          <div className="mt-4 space-y-4">
-            {fragments.map((fragment) => (
-              <article key={fragment._id} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
-                <header className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase text-slate-500">
-                  <span>{fragment.classification.tema}</span>
-                  <span>•</span>
-                  <span>{fragment.classification.tono}</span>
-                  <span>•</span>
-                  <span>{fragment.classification.confianza}% confianza</span>
-                  {fragment.classification.sensibilidad
-                    .filter((label) => label !== "ninguna")
-                    .map((label) => (
-                      <span key={label} className="rounded-full bg-rose-100 px-2 py-0.5 text-rose-700">
-                        {label}
-                      </span>
-                    ))}
-                </header>
-                <p className="mt-3 text-sm text-slate-900">{fragment.text}</p>
-                <p className="mt-2 text-xs text-slate-600">
-                  Contexto: <span className="font-medium">{fragment.context}</span>
-                </p>
-                <footer className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                  <a
-                    href={fragment.youtubeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    Ver en YouTube
-                  </a>
-                  <span>
-                    Tiempo: {fragment.startTime}s - {fragment.endTime}s
-                  </span>
-                  <span>Detectado: {new Date(fragment.detectedAt).toLocaleString()}</span>
-                  {fragment.classification.razon && <span>Motivo: {fragment.classification.razon}</span>}
-                </footer>
-              </article>
-            ))}
+          <div className="">
+            {fragmentsLoading ? (
+              <div className="">
+                Cargando fragmentos…
+              </div>
+            ) : (
+              fragments.map((fragment) => (
+                <article
+                  key={fragment._id}
+                  className=""
+                >
+                  <header className="">
+                    <span>{fragment.classification.tema}</span>
+                    <span>•</span>
+                    <span>{fragment.classification.tono}</span>
+                    <span>•</span>
+                    <span>{fragment.classification.confianza}% confianza</span>
+                    {fragment.classification.sensibilidad
+                      .filter((label) => label !== "ninguna")
+                      .map((label) => (
+                        <Badge key={label} variant="warning" className="">
+                          {label}
+                        </Badge>
+                      ))}
+                  </header>
+                  <p className="">{fragment.text}</p>
+                  <p className="">
+                    Contexto: <span className="">{fragment.context}</span>
+                  </p>
+                  <footer className="">
+                    <a
+                      href={fragment.youtubeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className=""
+                    >
+                      Ver en YouTube
+                    </a>
+                    <span>
+                      Tiempo: {fragment.startTime}s – {fragment.endTime}s
+                    </span>
+                    <span>{new Date(fragment.detectedAt).toLocaleString()}</span>
+                    {fragment.classification.razon ? <span>Motivo: {fragment.classification.razon}</span> : null}
+                  </footer>
+                </article>
+              ))
+            )}
           </div>
+        </section>
+      ) : (
+        <div className="">
+          Selecciona un episodio para visualizar los fragmentos detectados.
         </div>
       )}
-      
-
     </div>
   );
 }

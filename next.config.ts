@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
     },
   ],
   images: {
-    domains: ["i.ytimg.com"],
+    domains: ["i.ytimg.com", "yt3.ggpht.com"],
   },
 };
 

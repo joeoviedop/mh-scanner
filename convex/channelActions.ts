@@ -11,7 +11,7 @@ import {
   type YouTubePlaylist,
   type YouTubeVideo,
   YouTubeAPIError,
-} from "../src/lib/youtube-api";
+} from "../lib/integrations/youtube/youtube-api";
 
 type ParsedSource = {
   type: "channel" | "playlist" | "video";

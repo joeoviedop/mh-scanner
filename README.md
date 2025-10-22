@@ -2,28 +2,40 @@
 
 **Internal tool for VoyBien team** - Scan YouTube channels/playlists for mental health content mentions.
 
-## 🚀 Current Status: Fase 5 Complete ✅
+## Tech Stack
+- **Frontend**: Next.js 15.5.4 (App Router), React 19, TypeScript
+- **Backend**: Convex (serverless NoSQL DB + real-time API)
+- **External APIs**: YouTube Data API v3, YouTube Captions API, OpenAI GPT-4 mini
 
-**Progress: 80% Complete** - Interfaz de revisión y gestión de episodios implementada. Sistema completo de transcripciones y análisis IA con páginas dedicadas.
+## Development
 
-Este proyecto Next.js se generó siguiendo las convenciones definidas en `ARCHITECTURE.md` y `PROJECT_SETUP.md`.
+### Prerequisites
+- Node.js ≥ 18.17.0
+- npm ≥ 9.0.0
 
-### Requisitos previos
-- Node.js ≥ 18.17.0 (instalado)
-- npm ≥ 9.0.0 (instalado)
-
-### Scripts disponibles
-
+### Commands
 ```bash
-npm run dev          # Servidor de desarrollo
-npm run build        # Build de producción
-npm run start        # Servir la build
-npm run lint         # Revisar linting
-npm run type-check   # Validación TypeScript
-npm run format       # Formatear código con Prettier
-npm run convex:dev   # Servidor de desarrollo Convex
-npm run convex:deploy # Deploy Convex a producción
+npm run dev          # Development server
+npm run build        # Production build
+npm run start        # Serve production build
+npm run lint         # ESLint check
+npm run type-check   # TypeScript validation
+npm run format       # Format code with Prettier
+npm run convex:dev   # Convex development server
+npm run convex:deploy # Deploy Convex to production
 ```
+
+## Project Structure
+- `app/` - Next.js App Router (auth & dashboard routes)
+- `components/` - React components organized by feature
+- `convex/` - Convex backend (schema, queries, mutations)
+- `lib/` - Utilities, integrations, and processing logic
+
+## Guidelines
+- TypeScript mandatory everywhere
+- Follow ESLint rules and Prettier formatting
+- Use kebab-case for folders, PascalCase for components
+- Never hardcode secrets - use environment variables
 
 ### Primeros pasos
 1. Instala dependencias: `npm install`
@@ -62,15 +74,15 @@ npm run convex:deploy # Deploy Convex a producción
 - [x] Rate limiting and security hardening
 
 ### **Fase 2: Input & Scanning (COMPLETED)**
-- [x] YouTube URL parser and validator (`src/lib/youtube-parser.ts`)
-- [x] YouTube Data API integration (`src/lib/youtube-api.ts`)
+- [x] YouTube URL parser and validator (`lib/integrations/youtube/youtube-parser.ts`)
+- [x] YouTube Data API integration (`lib/integrations/youtube/youtube-api.ts`)
 - [x] Complete Convex database schema (`convex/schema.ts`)
 - [x] Channel management functions (`convex/channels.ts`)
 - [x] Episode management functions (`convex/episodes.ts`)
-- [x] Scanning form UI component (`src/components/forms/ScanInputForm.tsx`)
+- [x] Scanning form UI component (`components/forms/ScanInputForm.tsx`)
 - [x] API pública para iniciar escaneos desde el dashboard (`/api/youtube/scan`)
 - [x] Acción Convex para registrar fuentes y descargar episodios (`convex/channelActions.ts`)
-- [x] Episodes listing UI component (`src/components/episodes/EpisodeList.tsx`)
+- [x] Episodes listing UI component (`components/episodes/EpisodeList.tsx`)
 - [x] Infrastructure setup (NPM scripts, environment variables)
 
 - [x] API route para solicitar transcripciones (`/api/youtube/fetch-captions`)
@@ -96,16 +108,24 @@ npm run convex:deploy # Deploy Convex a producción
 - [x] **Análisis de fragmentos** con clasificación IA, confianza, sensibilidad y enlaces a YouTube
 - [x] **Integración con Apify** completamente funcional con fixes de env variables y API format
 
+### **Fase 6: Feedback & Re-ranking (COMPLETED)** ✅
+- [x] Sistema de feedback contextual con botones “Útil / No útil” y motivos configurables por fragmento
+- [x] Algoritmo de re-ranking que combina confianza del modelo y señal de feedback humano
+- [x] Tableros de métricas con cobertura, tasa de acierto y ranking promedio por episodio
+- [x] Análisis de patrones de error y recomendaciones automáticas para iterar los prompts de clasificación
+
 ## ✅ **Validation Results**
 - `npm run lint`
 - `npm run type-check`
 
-## 🚀 **Next Phase: Feedback & Re-ranking (Fase 6)**
-- Sistema de feedback con botones "Útil / No útil" en cada fragmento
-- Algoritmo de re-ranking basado en feedback acumulado
-- Dashboard de métricas de calidad y precisión del sistema
-- Análisis de patrones para mejorar prompts de clasificación
+## 🚀 **Next Phase: QA & Launch Readiness (Fase 7)**
+- Revisión end-to-end de flujos críticos con smoke tests automatizados
+- Documentación de procesos de soporte y resolución de falsos positivos
+- Preparación de materiales para entrenamiento interno del equipo VoyBien
 
 ### Documentación clave
-- `WARP.md` — Project overview and coding agent guidance
-- `ARCHITECTURE.md` — Technical architecture and data models
+- `docs/architecture.md` — Mapa del sistema y flujos end-to-end
+- `docs/decisions.md` — Registro vivo de decisiones técnicas (ADRs ligeros)
+- `docs/pitfalls.md` — Lista de gotchas y errores comunes
+- `docs/checklists.md` — Checklists de setup, QA y releases
+- `docs/rewrite-playbook.md` — Guía táctica para reconstruir el proyecto con los aprendizajes actuales

@@ -1,7 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import React, { useEffect, useMemo, useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 
 interface Keyword {
   _id: string;
@@ -31,37 +34,47 @@ const CATEGORY_NAMES: Record<string, string> = {
   therapeutic: "🔬 Therapeutic Concepts",
 };
 
-const PRIORITY_COLORS = {
-  high: "bg-red-100 text-red-800",
-  medium: "bg-yellow-100 text-yellow-800",
-  low: "bg-gray-100 text-gray-800",
+const PRIORITY_BADGES: Record<Keyword["priority"], string> = {
+  high: "bg-danger-50/80 text-danger-600",
+  medium: "bg-warning-50/80 text-warning-600",
+  low: "bg-sand-100 text-sand-600",
 };
 
+const STATUS_BADGES = {
+  active: "bg-success-50/80 text-success-600",
+  inactive: "bg-sand-100 text-sand-500",
+};
+
+const INPUT_STYLES =
+  "w-full rounded-3xl border border-white/70 bg-white/95 px-4 py-2 text-sm text-sand-900 shadow-subtle transition focus:border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-100";
+
 export default function KeywordConfigPageClient() {
-  const [data, setData] = useState<KeywordConfigData>({ keywords: [], categories: [], lastUpdated: null });
+  const [data, setData] = useState<KeywordConfigData>({
+    keywords: [],
+    categories: [],
+    lastUpdated: null,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  
-  // Filters
+
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [showInactive, setShowInactive] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Edit state
   const [editingKeyword, setEditingKeyword] = useState<Keyword | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     keyword: "",
     category: "",
-    priority: "medium" as "high" | "medium" | "low",
+    priority: "medium" as Keyword["priority"],
     description: "",
     isActive: true,
   });
 
   useEffect(() => {
-    fetchKeywords();
+    void fetchKeywords();
   }, []);
 
   const fetchKeywords = async () => {
@@ -78,9 +91,8 @@ export default function KeywordConfigPageClient() {
 
       setData(result.data);
 
-      // If no keywords exist, show initialization option
       if (result.data.keywords.length === 0) {
-        setStatusMessage("No keywords configured. Initialize with default therapy keywords?");
+        setStatusMessage("No hay palabras clave configuradas. ¿Quieres inicializarlas con un set recomendado?");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load keywords");
@@ -105,7 +117,7 @@ export default function KeywordConfigPageClient() {
         throw new Error(result.error || "Failed to initialize keywords");
       }
 
-      setStatusMessage(`Initialized ${result.data.count} default keywords successfully`);
+      setStatusMessage(`Agregamos ${result.data.count} palabras clave sugeridas.`);
       await fetchKeywords();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to initialize keywords");
@@ -116,7 +128,7 @@ export default function KeywordConfigPageClient() {
 
   const handleSaveKeyword = async () => {
     if (!formData.keyword.trim() || !formData.category.trim()) {
-      setError("Keyword and category are required");
+      setError("La palabra clave y la categoría son obligatorias.");
       return;
     }
 
@@ -124,9 +136,7 @@ export default function KeywordConfigPageClient() {
       setError(null);
       setStatusMessage(null);
 
-      const payload = editingKeyword 
-        ? { ...formData, id: editingKeyword._id }
-        : formData;
+      const payload = editingKeyword ? { ...formData, id: editingKeyword._id } : formData;
 
       const response = await fetch("/api/config/keywords", {
         method: "POST",
@@ -142,10 +152,8 @@ export default function KeywordConfigPageClient() {
         throw new Error(result.error || "Failed to save keyword");
       }
 
-      const action = editingKeyword ? "updated" : "added";
-      setStatusMessage(`Keyword ${action} successfully`);
-      
-      // Reset form
+      setStatusMessage(editingKeyword ? "Palabra clave actualizada." : "Palabra clave agregada.");
+
       setFormData({
         keyword: "",
         category: "",
@@ -163,7 +171,7 @@ export default function KeywordConfigPageClient() {
   };
 
   const handleDeleteKeyword = async (keyword: Keyword) => {
-    if (!confirm(`Are you sure you want to delete "${keyword.keyword}"?`)) {
+    if (!confirm(`¿Eliminar "${keyword.keyword}"?`)) {
       return;
     }
 
@@ -181,7 +189,7 @@ export default function KeywordConfigPageClient() {
         throw new Error(result.error || "Failed to delete keyword");
       }
 
-      setStatusMessage("Keyword deleted successfully");
+      setStatusMessage("Palabra clave eliminada.");
       await fetchKeywords();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete keyword");
@@ -239,382 +247,348 @@ export default function KeywordConfigPageClient() {
     });
   };
 
-  // Filter keywords
-  const filteredKeywords = data.keywords.filter(keyword => {
-    if (selectedCategory !== "all" && keyword.category !== selectedCategory) return false;
-    if (selectedPriority !== "all" && keyword.priority !== selectedPriority) return false;
-    if (!showInactive && !keyword.isActive) return false;
-    if (searchTerm && !keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-    return true;
-  });
+  const filteredKeywords = useMemo(() => {
+    return data.keywords.filter((keyword) => {
+      if (selectedCategory !== "all" && keyword.category !== selectedCategory) return false;
+      if (selectedPriority !== "all" && keyword.priority !== selectedPriority) return false;
+      if (!showInactive && !keyword.isActive) return false;
+      if (searchTerm && !keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      return true;
+    });
+  }, [data.keywords, selectedCategory, selectedPriority, showInactive, searchTerm]);
 
-  const activeCount = data.keywords.filter(k => k.isActive).length;
+  const activeCount = data.keywords.filter((keyword) => keyword.isActive).length;
   const totalCount = data.keywords.length;
 
   if (loading && data.keywords.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading keyword configuration...</p>
+      <div className="">
+        <div className="">
+          <span className="" />
+          <p className="">Cargando palabras clave…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/dashboard"
-                className="text-gray-400 hover:text-gray-600 text-sm font-medium"
-              >
-                ← Dashboard
-              </Link>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <h1 className="text-lg font-semibold text-gray-900">Keyword Configuration</h1>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-600">
-                {activeCount} active / {totalCount} total keywords
-              </div>
-              {!showAddForm && (
-                <button
-                  onClick={() => setShowAddForm(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Add Keyword
-                </button>
-              )}
-            </div>
+    <div className="">
+      <header className="">
+        <Breadcrumb
+          items={[
+            { label: "Inicio", href: "/dashboard" },
+            { label: "Configuración" },
+            { label: "Palabras clave" },
+          ]}
+        />
+        <div className="">
+          <div className="">
+            <p className="">
+              Podcaster Therapy Scanner
+            </p>
+            <h1 className="">Configura la detección por palabras clave</h1>
+            <p className="">
+              Ajusta el diccionario de términos que usamos para detectar menciones en las transcripciones y priorizar fragmentos.
+            </p>
+          </div>
+          <div className="">
+            <Badge variant="outline" className="">
+              {activeCount} activas · {totalCount} totales
+            </Badge>
+            {!showAddForm ? (
+              <Button variant="secondary" size="sm" onClick={() => setShowAddForm(true)}>
+                Añadir palabra clave
+              </Button>
+            ) : null}
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Status Messages */}
-        {statusMessage && (
-          <div className="mb-6 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-            {statusMessage}
-            <button
-              onClick={() => setStatusMessage(null)}
-              className="ml-2 text-green-600 hover:text-green-800"
-            >
-              ✕
-            </button>
+      {statusMessage ? (
+        <div className="">
+          <div className="">
+            <span>{statusMessage}</span>
+            <Button variant="ghost" size="sm" className="" onClick={() => setStatusMessage(null)}>
+              Cerrar
+            </Button>
           </div>
-        )}
+        </div>
+      ) : null}
 
-        {error && (
-          <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-            <button
-              onClick={() => setError(null)}
-              className="ml-2 text-red-600 hover:text-red-800"
-            >
-              ✕
-            </button>
+      {error ? (
+        <div className="">
+          <div className="">
+            <span>{error}</span>
+            <Button variant="ghost" size="sm" className="" onClick={() => setError(null)}>
+              Cerrar
+            </Button>
           </div>
-        )}
+        </div>
+      ) : null}
 
-        {/* Initialize Default Keywords */}
-        {data.keywords.length === 0 && !loading && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center mb-8">
-            <div className="text-6xl mb-4">🔧</div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No Keywords Configured</h2>
-            <p className="text-gray-600 mb-6">
-              Start by initializing the default therapy keywords, or add your own manually.
-            </p>
-            <div className="flex gap-4 justify-center">
-              <button
-                onClick={initializeDefaultKeywords}
-                disabled={loading}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-              >
-                {loading ? "Initializing..." : "Initialize Default Keywords"}
-              </button>
-              <button
-                onClick={() => setShowAddForm(true)}
-                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-              >
-                Add Custom Keyword
-              </button>
+      {data.keywords.length === 0 && !loading ? (
+        <div className="">
+          <div className="">🔧</div>
+          <h2 className="">No hay palabras clave configuradas</h2>
+          <p className="">
+            Inicializa el set sugerido o comienza agregando tus propias variantes manualmente.
+          </p>
+          <div className="">
+            <Button onClick={initializeDefaultKeywords} isLoading={loading} loadingLabel="Inicializando…">
+              Inicializar palabras sugeridas
+            </Button>
+            <Button variant="secondary" onClick={() => setShowAddForm(true)}>
+              Agregar manualmente
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {showAddForm ? (
+        <div className="">
+          <div className="">
+            <div>
+              <h3 className="">
+                {editingKeyword ? "Editar palabra clave" : "Nueva palabra clave"}
+              </h3>
+              <p className="">
+                Define la categoría, prioridad y describe cuándo debe dispararse esta detección.
+              </p>
             </div>
+            <Button variant="ghost" onClick={cancelEdit} className="">
+              Cancelar
+            </Button>
           </div>
-        )}
 
-        {/* Add/Edit Keyword Form */}
-        {showAddForm && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {editingKeyword ? "Edit Keyword" : "Add New Keyword"}
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Keyword or Phrase *
-                </label>
-                <input
-                  type="text"
-                  value={formData.keyword}
-                  onChange={(e) => setFormData(prev => ({ ...prev, keyword: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., terapia, mi psicólogo"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category *
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select category...</option>
-                  {Object.entries(CATEGORY_NAMES).map(([key, name]) => (
-                    <option key={key} value={key}>{name}</option>
-                  ))}
-                  <option value="custom">Custom</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Priority
-                </label>
-                <select
-                  value={formData.priority}
-                  onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as "high" | "medium" | "low" }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="high">High Priority</option>
-                  <option value="medium">Medium Priority</option>
-                  <option value="low">Low Priority</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Active</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description (Optional)
+          <div className="">
+            <div>
+              <label className="">
+                Palabra o frase *
               </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                placeholder="When should this keyword trigger detection?"
+              <input
+                type="text"
+                value={formData.keyword}
+                onChange={(event) => setFormData((prev) => ({ ...prev, keyword: event.target.value }))}
+                className={INPUT_STYLES}
+                placeholder="Ej. terapia, mi psicólogo"
               />
             </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={handleSaveKeyword}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            <div>
+              <label className="">
+                Categoría *
+              </label>
+              <select
+                value={formData.category}
+                onChange={(event) => setFormData((prev) => ({ ...prev, category: event.target.value }))}
+                className={INPUT_STYLES}
               >
-                {editingKeyword ? "Update Keyword" : "Add Keyword"}
-              </button>
-              <button
-                onClick={cancelEdit}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                <option value="">Selecciona…</option>
+                {Object.entries(CATEGORY_NAMES).map(([key, name]) => (
+                  <option key={key} value={key}>
+                    {name}
+                  </option>
+                ))}
+                <option value="custom">Personalizada</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="">
+                Prioridad
+              </label>
+              <select
+                value={formData.priority}
+                onChange={(event) =>
+                  setFormData((prev) => ({ ...prev, priority: event.target.value as Keyword["priority"] }))
+                }
+                className={INPUT_STYLES}
               >
-                Cancel
-              </button>
+                <option value="high">Alta prioridad</option>
+                <option value="medium">Media prioridad</option>
+                <option value="low">Baja prioridad</option>
+              </select>
             </div>
+
+            <label className="">
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={(event) => setFormData((prev) => ({ ...prev, isActive: event.target.checked }))}
+                className=""
+              />
+              Activa para nuevos análisis
+            </label>
           </div>
-        )}
 
-        {/* Filters */}
-        {data.keywords.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Search
-                </label>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Search keywords..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="all">All Categories</option>
-                  {data.categories.map((category) => (
-                    <option key={category} value={category}>
-                      {CATEGORY_NAMES[category] || category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Priority
-                </label>
-                <select
-                  value={selectedPriority}
-                  onChange={(e) => setSelectedPriority(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="all">All Priorities</option>
-                  <option value="high">High Priority</option>
-                  <option value="medium">Medium Priority</option>
-                  <option value="low">Low Priority</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={showInactive}
-                    onChange={(e) => setShowInactive(e.target.checked)}
-                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Show Inactive</span>
-                </label>
-              </div>
-            </div>
+          <div className="">
+            <label className="">
+              Descripción (opcional)
+            </label>
+            <textarea
+              rows={3}
+              value={formData.description}
+              onChange={(event) => setFormData((prev) => ({ ...prev, description: event.target.value }))}
+              className={`${INPUT_STYLES} min-h-[120px]`}
+              placeholder="¿Cuándo debería marcarse esta palabra clave?"
+            />
           </div>
-        )}
 
-        {/* Keywords List */}
-        {filteredKeywords.length > 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Keywords ({filteredKeywords.length})
-              </h2>
+          <div className="">
+            <Button type="button" onClick={handleSaveKeyword} isLoading={loading} loadingLabel="Guardando…">
+              {editingKeyword ? "Actualizar palabra clave" : "Agregar palabra clave"}
+            </Button>
+            <Button variant="ghost" onClick={cancelEdit} className="">
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {data.keywords.length > 0 ? (
+        <div className="">
+          <div className="">
+            <div>
+              <label className="">
+                Buscar
+              </label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className={INPUT_STYLES}
+                placeholder="Buscar palabras…"
+              />
             </div>
-            
-            <div className="divide-y divide-gray-200">
-              {filteredKeywords.map((keyword) => (
-                <div key={keyword._id} className="p-6 hover:bg-gray-50">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-medium text-gray-900">
-                          &ldquo;{keyword.keyword}&rdquo;
-                        </h3>
-                        
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${PRIORITY_COLORS[keyword.priority]}`}>
-                          {keyword.priority}
-                        </span>
+            <div>
+              <label className="">
+                Categoría
+              </label>
+              <select
+                value={selectedCategory}
+                onChange={(event) => setSelectedCategory(event.target.value)}
+                className={INPUT_STYLES}
+              >
+                <option value="all">Todas</option>
+                {data.categories.map((category) => (
+                  <option key={category} value={category}>
+                    {CATEGORY_NAMES[category] || category}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="">
+                Prioridad
+              </label>
+              <select
+                value={selectedPriority}
+                onChange={(event) => setSelectedPriority(event.target.value)}
+                className={INPUT_STYLES}
+              >
+                <option value="all">Todas</option>
+                <option value="high">Alta</option>
+                <option value="medium">Media</option>
+                <option value="low">Baja</option>
+              </select>
+            </div>
+            <label className="">
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={(event) => setShowInactive(event.target.checked)}
+                className=""
+              />
+              Mostrar inactivas
+            </label>
+          </div>
+        </div>
+      ) : null}
 
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {CATEGORY_NAMES[keyword.category] || keyword.category}
-                        </span>
-
-                        {keyword.isActive ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Active
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            Inactive
-                          </span>
-                        )}
-                      </div>
-
-                      {keyword.description && (
-                        <p className="text-sm text-gray-600 mb-2">
-                          {keyword.description}
-                        </p>
-                      )}
-
-                      <p className="text-xs text-gray-500">
-                        Last modified: {new Date(keyword.lastModified).toLocaleString()}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2 ml-4">
-                      <button
-                        onClick={() => handleToggleActive(keyword)}
-                        className={`px-3 py-1 text-xs rounded-lg ${
-                          keyword.isActive
-                            ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                            : "bg-green-100 text-green-800 hover:bg-green-200"
+      {filteredKeywords.length > 0 ? (
+        <div className="">
+          <div className="">
+            <h2 className="">Palabras clave ({filteredKeywords.length})</h2>
+            <Badge variant="outline" className="">
+              Última actualización:{" "}
+              {data.lastUpdated ? new Date(data.lastUpdated).toLocaleDateString() : "sin datos"}
+            </Badge>
+          </div>
+          <div className="divide-y divide-white/60">
+            {filteredKeywords.map((keyword) => (
+              <div key={keyword._id} className="">
+                <div className="">
+                  <div className="">
+                    <div className="">
+                      <h3 className="">
+                        &ldquo;{keyword.keyword}&rdquo;
+                      </h3>
+                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold capitalize ${PRIORITY_BADGES[keyword.priority]}`}>
+                        {keyword.priority}
+                      </span>
+                      <span className="">
+                        {CATEGORY_NAMES[keyword.category] || keyword.category}
+                      </span>
+                      <span
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                          keyword.isActive ? STATUS_BADGES.active : STATUS_BADGES.inactive
                         }`}
                       >
-                        {keyword.isActive ? "Deactivate" : "Activate"}
-                      </button>
-
-                      <button
-                        onClick={() => startEdit(keyword)}
-                        className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() => handleDeleteKeyword(keyword)}
-                        className="px-3 py-1 text-xs bg-red-100 text-red-800 rounded-lg hover:bg-red-200"
-                      >
-                        Delete
-                      </button>
+                        {keyword.isActive ? "Activa" : "Inactiva"}
+                      </span>
                     </div>
+                    {keyword.description ? (
+                      <p className="">{keyword.description}</p>
+                    ) : null}
+                    <p className="">
+                      Actualizada {new Date(keyword.lastModified).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className={keyword.isActive ? "text-warning-600 hover:text-warning-700" : "text-success-600 hover:text-success-700"}
+                      onClick={() => handleToggleActive(keyword)}
+                    >
+                      {keyword.isActive ? "Desactivar" : "Activar"}
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => startEdit(keyword)}>
+                      Editar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className=""
+                      onClick={() => handleDeleteKeyword(keyword)}
+                    >
+                      Eliminar
+                    </Button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        ) : data.keywords.length > 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-            <div className="text-4xl mb-4">🔍</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Keywords Match Filters</h3>
-            <p className="text-gray-600">
-              Try adjusting your search or filter criteria.
-            </p>
-          </div>
-        ) : null}
+        </div>
+      ) : data.keywords.length > 0 ? (
+        <div className="">
+          <div className="">🔍</div>
+          <h3 className="">No hay coincidencias con los filtros</h3>
+          <p className="">Ajusta tu búsqueda o muestra palabras inactivas.</p>
+        </div>
+      ) : null}
 
-        {/* Info Box */}
-        {data.keywords.length > 0 && (
-          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-blue-800 mb-2">
-              💡 How Keywords Work
-            </h4>
-            <ul className="text-sm text-blue-700 space-y-1">
-              <li>• Only <strong>active</strong> keywords are used for transcript analysis</li>
-              <li>• <strong>High priority</strong> keywords are weighted more heavily in detection</li>
-              <li>• Keywords are matched using fuzzy text matching (ignores accents, case)</li>
-              <li>• Changes take effect immediately for new transcript processing</li>
-            </ul>
-          </div>
-        )}
-      </div>
+      {data.keywords.length > 0 ? (
+        <div className="">
+          <h4 className="">💡 Cómo usamos estas palabras</h4>
+          <ul className="">
+            <li>• Solo las palabras <strong>activas</strong> se usan en nuevos análisis.</li>
+            <li>• Las de <strong>alta prioridad</strong> pesan más en el ranking de fragmentos.</li>
+            <li>• Aplicamos coincidencias difusas (ignora mayúsculas, acentos y pluralizaciones).</li>
+            <li>• Los cambios aplican inmediatamente para los siguientes procesos de transcripción.</li>
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }

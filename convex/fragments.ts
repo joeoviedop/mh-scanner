@@ -2,6 +2,7 @@ import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
+import { calculateFragmentRank } from "./utils/ranking";
 
 const classificationValidator = v.object({
   tema: v.union(
@@ -69,10 +70,33 @@ export const listByEpisode = query({
       .order("asc")
       .collect();
 
-    return fragments.map((fragment) => ({
-      ...fragment,
-      detectedAtIso: new Date(fragment.detectedAt).toISOString(),
-    }));
+    const decorated = fragments.map((fragment) => {
+      const rankScore = calculateFragmentRank({
+        confidenceScore: fragment.confidenceScore,
+        feedbackCount: fragment.feedbackCount,
+        positiveFeedback: fragment.positiveFeedback,
+        negativeFeedback: fragment.negativeFeedback,
+      });
+
+      const approvalRate =
+        fragment.feedbackCount > 0
+          ? Number((fragment.positiveFeedback / fragment.feedbackCount).toFixed(3))
+          : null;
+
+      return {
+        ...fragment,
+        detectedAtIso: new Date(fragment.detectedAt).toISOString(),
+        rankScore,
+        feedbackSummary: {
+          total: fragment.feedbackCount,
+          positive: fragment.positiveFeedback,
+          negative: fragment.negativeFeedback,
+          approvalRate,
+        },
+      };
+    });
+
+    return decorated.sort((a, b) => b.rankScore - a.rankScore);
   },
 });
 

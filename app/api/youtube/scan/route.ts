@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 
 import { api } from "../../../../convex/_generated/api";
-import { parseYouTubeUrl } from "@/src/lib/youtube-parser";
+import { parseYouTubeUrl } from "@/lib/integrations/youtube/youtube-parser";
 
 function getConvexClient(): ConvexHttpClient {
   const url = process.env.NEXT_PUBLIC_CONVEX_URL;
